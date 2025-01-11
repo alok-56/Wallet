@@ -39,7 +39,7 @@ app.use(globalErrHandler);
 
 const PORT = 8080;
 ConnectDatabase()
-.then(() => {
+  .then(() => {
     app.listen(PORT, () => {
       console.log(`App is listening on port ${PORT}`);
     });
