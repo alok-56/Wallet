@@ -14,6 +14,8 @@ const TransactionRouter = require("./Routes/Transaction");
 require("dotenv").config();
 const app = express();
 
+ConnectDatabase()
+
 // global Middleware
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
@@ -38,13 +40,8 @@ app.use("*", (req, res, next) => {
 app.use(globalErrHandler);
 
 const PORT = 8080;
-ConnectDatabase()
-  .then(() => {
+
     app.listen(PORT, () => {
       console.log(`App is listening on port ${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error("Database connection failed:", err);
-    process.exit(1);
-  });
+ 
