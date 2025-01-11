@@ -11,8 +11,11 @@ const CommisionRouter = require("./Routes/Commision");
 const TransactionRouter = require("./Routes/Transaction");
 const ConnectDatabase = require("./Config/Database");
 
+
 require("dotenv").config();
 const app = express();
+
+ConnectDatabase()
 
 // global Middleware
 app.use(
@@ -37,14 +40,10 @@ app.use("*", (req, res, next) => {
 // Global Error
 app.use(globalErrHandler);
 
-const PORT = 8080;
-ConnectDatabase()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`App is listening on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Database connection failed:", err);
-    process.exit(1);
+const PORT = process.env.PORT || 3000;
+const Applisten = () => {
+  app.listen(PORT, () => {
+    console.log(`App is listening on ${PORT}`);
   });
+};
+Applisten();
