@@ -14,7 +14,7 @@ const TransactionRouter = require("./Routes/Transaction");
 require("dotenv").config();
 const app = express();
 
-ConnectDatabase()
+ConnectDatabase();
 
 // global Middleware
 app.use(
@@ -39,9 +39,8 @@ app.use("*", (req, res, next) => {
 // Global Error
 app.use(globalErrHandler);
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
-    app.listen(PORT, () => {
-      console.log(`App is listening on port ${PORT}`);
-    });
- 
+app.listen(PORT, () => {
+  console.log(`App is listening on port ${PORT}`);
+});
