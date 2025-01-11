@@ -4,16 +4,15 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const globalErrHandler = require("./Middleware/globalerror");
-const ConnectDatabase = require("./Config/Database");
 const UserRouter = require("./Routes/Users");
 const AdminRouter = require("./Routes/Admin");
 const AppErr = require("./Helper/AppError");
 const CommisionRouter = require("./Routes/Commision");
 const TransactionRouter = require("./Routes/Transaction");
+const ConnectDatabase = require("./Config/Database");
 
 require("dotenv").config();
 const app = express();
-
 
 // global Middleware
 app.use(
@@ -40,7 +39,7 @@ app.use(globalErrHandler);
 
 const PORT = 8080;
 ConnectDatabase()
-  .then(() => {
+.then(() => {
     app.listen(PORT, () => {
       console.log(`App is listening on port ${PORT}`);
     });
