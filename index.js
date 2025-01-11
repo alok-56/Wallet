@@ -1,4 +1,5 @@
 const express = require("express");
+const Db = require("./Config/DbConnection");
 const cors = require("cors");
 const morgan = require("morgan");
 const helmet = require("helmet");
@@ -9,13 +10,10 @@ const AdminRouter = require("./Routes/Admin");
 const AppErr = require("./Helper/AppError");
 const CommisionRouter = require("./Routes/Commision");
 const TransactionRouter = require("./Routes/Transaction");
-const ConnectDatabase = require("./Config/Database");
-
 
 require("dotenv").config();
+Db();
 const app = express();
-
-ConnectDatabase()
 
 // global Middleware
 app.use(
