@@ -46,7 +46,7 @@ UserRouter.post(
 UserRouter.patch(
   "/updatepassword",
   body("Email").notEmpty().withMessage("Email is required"),
-  body("oldPassword").notEmpty().withMessage("oldPassword is required"),
+  body("conformpassword").notEmpty().withMessage("conformpassword is required"),
   body("newPassword").notEmpty().withMessage("newPassword is required"),
   PasswordChange
 );

@@ -4,6 +4,7 @@ const UserModal = require("../Modal/Users");
 const generateToken = require("../Helper/GenerateToken");
 const SendEmail = require("../Helper/Email");
 const OtpModal = require("../Modal/Otp");
+const emailQueue = require("../Helper/EmailJobs");
 
 // Sign Up
 const SignUp = async (req, res, next) => {
@@ -19,6 +20,11 @@ const SignUp = async (req, res, next) => {
       .toUpperCase();
 
     let { Name, Email, Password, referralCode } = req.body;
+
+    let emailcheck=await UserModal.findOne({Email:Email})
+    if(emailcheck){
+      return next(new AppErr("Email Already Exists",400))
+    }
 
     const user = new UserModal({
       Name,
@@ -36,13 +42,18 @@ const SignUp = async (req, res, next) => {
         await referrer.save();
       }
 
-      await SendEmail(referrer.Email, "ReferralPersonJoined", referrer.Name, {
-        referralName: Name,
-      });
+      emailQueue.add(
+        SendEmail(referrer.Email, "ReferralPersonJoined", referrer.Name, {
+          referralName: Name,
+        })
+      );
     }
 
     await user.save();
-    await SendEmail(Email, "WelcomeUser", Name, null);
+
+    emailQueue.add(
+       SendEmail(Email, "WelcomeUser", Name, null)
+    );
 
     return res.status(200).json({
       status: true,
@@ -75,6 +86,7 @@ const SignIn = async (req, res, next) => {
     }
 
     let token = await generateToken(Emailcheck._id);
+
     return res.status(200).json({
       status: true,
       code: 200,
@@ -158,14 +170,16 @@ const PasswordChange = async (req, res, next) => {
       return next(new AppErr(err.errors[0].msg, 403));
     }
 
-    let { Email, oldPassword, newPassword } = req.body;
+    let { Email, newPassword, conformpassword } = req.body;
 
     let Emailcheck = await UserModal.findOne({ Email: Email });
     if (!Emailcheck) {
       return next(new AppErr("User Not  Found", 400));
     }
-    if (Emailcheck.Password !== oldPassword) {
-      return next(new AppErr("Incorrect Old Password", 400));
+    if (newPassword !== conformpassword) {
+      return next(
+        new AppErr("New Password and Conform Password not matched", 400)
+      );
     }
     await UserModal.updateOne(
       {
