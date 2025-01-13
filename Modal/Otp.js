@@ -8,7 +8,7 @@ const OtpSchema = new Schema(
     },
     expiresAt: {
       type: Date,
-      default: () => Date.now() + 5 * 60 * 1000,
+      default: () => Date.now() + 1 * 60 * 1000,
     },
   },
   { timestamps: true }
