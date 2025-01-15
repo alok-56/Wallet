@@ -185,10 +185,9 @@ const myfund = async (req, res, next) => {
       filter.status = status;
     }
 
-    let funds = await TransactionModal.find(filter).populate(
-      "UserId",
-      "-Password"
-    );
+    let funds = await TransactionModal.find(filter)
+      .populate("UserId", "-Password")
+      .populate("triggeredBy", "-Password");
 
     return res.status(200).json({
       status: true,
