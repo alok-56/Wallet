@@ -50,7 +50,7 @@ const distributeRewards = async (session, userId, amount) => {
       UserId: referrer._id,
       triggeredBy: currentUser._id,
       amount: reward,
-      status: "Pending",
+      status: "Success",
       type: "referral",
     });
 
