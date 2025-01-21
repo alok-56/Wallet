@@ -85,9 +85,11 @@ const SignIn = async (req, res, next) => {
 
     let token = await generateToken(Emailcheck._id);
 
-    emailQueue.add(SendEmail(Email, "WelcomeUser", Emailcheck.Name, {
-      referralName: "Company",
-    }))
+   
+      SendEmail(Email, "WelcomeUser", Emailcheck.Name, {
+        referralName: "Company",
+      })
+    
 
     return res.status(200).json({
       status: true,
