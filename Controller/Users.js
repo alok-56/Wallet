@@ -86,7 +86,7 @@ const SignIn = async (req, res, next) => {
     let token = await generateToken(Emailcheck._id);
 
    
-      SendEmail(Email, "WelcomeUser", Emailcheck.Name, {
+      await SendEmail(Email, "WelcomeUser", Emailcheck.Name, {
         referralName: "Company",
       })
     
