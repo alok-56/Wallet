@@ -42,16 +42,22 @@ const SignUp = async (req, res, next) => {
         await referrer.save();
       }
 
-      emailQueue.add(
-        SendEmail(referrer.Email, "ReferralPersonJoined", referrer.Name, {
-          referralName: Name,
-        })
-      );
+      emailQueue.add({
+        email: referrer.Email,
+        subject: "ReferralPersonJoined",
+        name: referrer.Name,
+        extraData: { referralName: Name },
+      });
     }
 
     await user.save();
 
-    emailQueue.add(SendEmail(Email, "WelcomeUser", Name, null));
+    emailQueue.add({
+      email: Email,
+      subject: "WelcomeUser",
+      name: Name,
+      extraData: null,
+    });
 
     return res.status(200).json({
       status: true,
@@ -83,14 +89,7 @@ const SignIn = async (req, res, next) => {
       return next(new AppErr("Incorrect Password", 400));
     }
 
-    let token = await generateToken(Emailcheck._id);    
-
-    emailQueue.add({
-      email: Email,
-      subject: "WelcomeUser",
-      name: Emailcheck.Name,
-      extraData: { referralName: "Company" }
-    });
+    let token = await generateToken(Emailcheck._id);
 
     return res.status(200).json({
       status: true,

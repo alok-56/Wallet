@@ -5,7 +5,6 @@ const UserModal = require("../Modal/Users");
 const TransactionModal = require("../Modal/Transaction");
 const { default: mongoose } = require("mongoose");
 const emailQueue = require("../Helper/EmailJobs");
-const SendEmail = require("../Helper/Email");
 
 const distributeRewards = async (session, userId, amount) => {
   let currentUser = await UserModal.findById(userId);
@@ -114,11 +113,12 @@ const addFund = async (req, res, next) => {
       amount
     );
 
-    emailQueue.add(
-      SendEmail(user.Email, "FundAdded", user.Name, {
-        amountAdded: amount,
-      })
-    );
+    emailQueue.add({
+      email: user.Email,
+      subject: "FundAdded",
+      name: user.Name,
+      extraData: { amountAdded: amount },
+    });
 
     await session.commitTransaction();
 
@@ -337,11 +337,13 @@ const Approvereferal = async (req, res, next) => {
       { runValidators: true }
     );
 
-    emailQueue.add(
-      SendEmail(user.Email, "ReferralApproved", user.Name, {
-        reward: trans.amount,
-      })
-    );
+
+    emailQueue.add({
+      email: user.Email,
+      subject: "ReferralApproved",
+      name: user.Name,
+      extraData: { reward: trans.amount },
+    });
 
     res.status(200).json({
       status: true,
