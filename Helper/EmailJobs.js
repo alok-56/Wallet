@@ -1,22 +1,33 @@
 const Bull = require("bull");
 const AppErr = require("./AppError");
+const SendEmail = require("./Email");
 
 const emailQueue = new Bull("emailQueue", {
   redis: {
-    HOST: "redis-11138.c241.us-east-1-4.ec2.redns.redis-cloud.com:11138",
-    PORT: 6379,
+    host: "redis-11138.c241.us-east-1-4.ec2.redns.redis-cloud.com",
+    port: 11138,
     password: "Jbrm2gGFYcUlQJT7btYvLkmFwZwtBLME",
   },
 });
 
 const ProcessEmailJob = async (job) => {
   try {
-    job();
+    const { email, subject, name, extraData } = job.data;
+
+    await SendEmail(email, subject, name, extraData);
   } catch (error) {
-    return next(new AppErr(error.message, 500));
+    throw new AppErr(error.message, 500);
   }
 };
 
 emailQueue.process(ProcessEmailJob);
+
+emailQueue.on("error", (err) => {
+  console.error("Redis connection error:", err);
+});
+
+emailQueue.on("ready", () => {
+  console.log("Connected to Redis successfully");
+});
 
 module.exports = emailQueue;

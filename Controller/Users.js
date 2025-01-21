@@ -83,13 +83,14 @@ const SignIn = async (req, res, next) => {
       return next(new AppErr("Incorrect Password", 400));
     }
 
-    let token = await generateToken(Emailcheck._id);
+    let token = await generateToken(Emailcheck._id);    
 
-   
-      await SendEmail(Email, "WelcomeUser", Emailcheck.Name, {
-        referralName: "Company",
-      })
-    
+    emailQueue.add({
+      email: Email,
+      subject: "WelcomeUser",
+      name: Emailcheck.Name,
+      extraData: { referralName: "Company" }
+    });
 
     return res.status(200).json({
       status: true,
