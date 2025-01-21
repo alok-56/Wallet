@@ -21,9 +21,9 @@ const SignUp = async (req, res, next) => {
 
     let { Name, Email, Password, referralCode } = req.body;
 
-    let emailcheck=await UserModal.findOne({Email:Email})
-    if(emailcheck){
-      return next(new AppErr("Email Already Exists",400))
+    let emailcheck = await UserModal.findOne({ Email: Email });
+    if (emailcheck) {
+      return next(new AppErr("Email Already Exists", 400));
     }
 
     const user = new UserModal({
@@ -51,9 +51,7 @@ const SignUp = async (req, res, next) => {
 
     await user.save();
 
-    emailQueue.add(
-       SendEmail(Email, "WelcomeUser", Name, null)
-    );
+    emailQueue.add(SendEmail(Email, "WelcomeUser", Name, null));
 
     return res.status(200).json({
       status: true,
@@ -86,6 +84,10 @@ const SignIn = async (req, res, next) => {
     }
 
     let token = await generateToken(Emailcheck._id);
+
+    SendEmail(Email, "WelcomeUser", Emailcheck.Name, {
+      referralName: "Company",
+    });
 
     return res.status(200).json({
       status: true,
