@@ -10,6 +10,9 @@ const {
   AddProfit,
   TransactionCount,
   Approvereferal,
+  CreateDistributionPer,
+  UpdateDistributionPer,
+  GetDistributionPer,
 } = require("../Controller/Transaction");
 const IsAdmin = require("../Middleware/IsAdmin");
 
@@ -46,5 +49,15 @@ TransactionRouter.patch(
   IsAdmin,
   Approvereferal
 );
+
+TransactionRouter.post("/transaction/create", IsAdmin, CreateDistributionPer);
+
+TransactionRouter.patch(
+  "/transaction/update/:id",
+  IsAdmin,
+  UpdateDistributionPer
+);
+
+TransactionRouter.get("/transaction/get", IsAdmin, GetDistributionPer);
 
 module.exports = TransactionRouter;

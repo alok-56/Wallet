@@ -1,32 +1,13 @@
-const { default: MetaMaskSDK } = require("@metamask/sdk");
-const AppErr = require("../Helper/AppError");
-const { ethers } = require("ethers");
+const { Wallet, ethers } = require("ethers");
 require("dotenv").config();
 
-const MMSDK = new MetaMaskSDK({
-  dappMetadata: {
-    name: "Metamask transfer Api",
-    url: "http://localhost:3000",
-  },
-  infuraAPIKey: process.env.INFURA_API_KEY,
-});
+const generateTestWallet = () => {
+  const testWallet = Wallet.createRandom();
+  return testWallet;
+};
 
-const provider = new ethers.providers.InfuraProvider(
-  "homestead",
-  process.env.INFURA_API_KEY
-);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-
-const Sendmoney = async (req, res, next) => {
+const sendETH = async (senderWallet, recipientAddress, amount) => {
   try {
-    let { recipientAddress, amount } = req.body;
-    if (!ethers.utils.isAddress(recipientAddress)) {
-      return next(new AppErr("Invailed recipient Address", 400));
-    }
-    if (isNaN(amount) || amount <= 0) {
-      return next(new AppErr("Invailed amount", 400));
-    }
-
     const amountInWei = ethers.utils.parseEther(amount.toString());
 
     const tx = {
@@ -34,19 +15,44 @@ const Sendmoney = async (req, res, next) => {
       value: amountInWei,
     };
 
-    const transactionResponse = await wallet.sendTransaction(tx);
+    const transactionResponse = await senderWallet.sendTransaction(tx);
     await transactionResponse.wait();
-
-    res.status(200).json({
-      status: true,
-      code: 200,
-      message: transactionResponse,
-    });
+    return transactionResponse.hash;
   } catch (error) {
-    return next(new AppErr(error.message, 500));
+    console.error("Error sending ETH:", error);
   }
 };
 
-module.exports = {
-  Sendmoney,
+const checkBalance = async (provider, address) => {
+  try {
+    const balance = await provider.getBalance(address);
+    console.log("Balance of Address (ETH):", ethers.utils.formatEther(balance));
+  } catch (error) {
+    console.error("Error checking balance:", error);
+  }
 };
+
+const main = async () => {
+  if (!process.env.PRIVATE_KEY || !process.env.INFURA_API_KEY) {
+    throw new Error("Missing PRIVATE_KEY or INFURA_API_KEY in .env");
+  }
+
+  const provider = new ethers.providers.InfuraProvider(
+    "homestead",
+    process.env.INFURA_API_KEY
+  );
+  const senderWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  console.log(senderWallet)
+  const recipientWallet = generateTestWallet();
+  const amountToSend = "0.01";
+
+  const txHash = await sendETH(
+    senderWallet,
+    recipientWallet.address,
+    amountToSend
+  );
+
+  await checkBalance(provider, recipientWallet.address);
+};
+
+module.exports = { main };

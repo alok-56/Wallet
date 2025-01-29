@@ -7,7 +7,7 @@ const { default: mongoose } = require("mongoose");
 const emailQueue = require("../Helper/EmailJobs");
 const Distributionmodal = require("../Modal/Distribution");
 
-const CreateDistributionPer = async () => {
+const CreateDistributionPer = async (req, res, next) => {
   try {
     let { Level } = req.body;
 
@@ -15,9 +15,14 @@ const CreateDistributionPer = async () => {
       return next(new AppErr("Level cannot be empty", 400));
     }
 
-    let res = await Distributionmodal.create(req.body);
+    let leveltype = await Distributionmodal.find();
+    if (leveltype.length === 1) {
+      return next(new AppErr("Level should be only one", 400));
+    }
 
-    res.status(200).json({
+    let response = await Distributionmodal.create(req.body);
+
+    response.status(200).json({
       status: true,
       code: 200,
       data: res,
@@ -28,14 +33,53 @@ const CreateDistributionPer = async () => {
   }
 };
 
+const UpdateDistributionPer = async (req, res, next) => {
+  try {
+    let { Level } = req.body;
+    let { id } = req.params;
+
+    if (Level.length === 0) {
+      return next(new AppErr("Level cannot be empty", 400));
+    }
+
+    let response = await Distributionmodal.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+
+    res.status(200).json({
+      status: true,
+      code: 200,
+      data: response,
+      message: "Distribution Updated Successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+const GetDistributionPer = async (req, res, next) => {
+  try {
+    let leveltype = await Distributionmodal.find();
+
+    res.status(200).json({
+      status: true,
+      code: 200,
+      data: leveltype,
+      message: "Distribution Fetched Successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
 const distributeRewards = async (session, userId, amount) => {
   let currentUser = await UserModal.findById(userId);
   let level = 1;
-
-  const rewardPercentages = [10, 5, 4, 3, 2, 1, 1, 1, 1, 1];
+  let rewardlevelmodal = await Distributionmodal.find();
+  const rewardPercentages = rewardlevelmodal.Level;
   let rewardsDistributed = [];
 
-  while (currentUser && currentUser.referredBy && level <= 10) {
+  while (currentUser && currentUser.referredBy && level <= rewardPercentages.length) {
     const referrer = await UserModal.findOne(
       { referralCode: currentUser.referredBy },
       null,
@@ -384,4 +428,7 @@ module.exports = {
   AddProfit,
   TransactionCount,
   Approvereferal,
+  CreateDistributionPer,
+  UpdateDistributionPer,
+  GetDistributionPer,
 };
