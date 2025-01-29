@@ -12,4 +12,4 @@ const Db = () => {
     });
 };
 
-module.exports=Db
+module.exports = Db;

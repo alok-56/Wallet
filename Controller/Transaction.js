@@ -5,6 +5,28 @@ const UserModal = require("../Modal/Users");
 const TransactionModal = require("../Modal/Transaction");
 const { default: mongoose } = require("mongoose");
 const emailQueue = require("../Helper/EmailJobs");
+const Distributionmodal = require("../Modal/Distribution");
+
+const CreateDistributionPer = async () => {
+  try {
+    let { Level } = req.body;
+
+    if (Level.length === 0) {
+      return next(new AppErr("Level cannot be empty", 400));
+    }
+
+    let res = await Distributionmodal.create(req.body);
+
+    res.status(200).json({
+      status: true,
+      code: 200,
+      data: res,
+      message: "Distribution created Successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
 
 const distributeRewards = async (session, userId, amount) => {
   let currentUser = await UserModal.findById(userId);
@@ -336,7 +358,6 @@ const Approvereferal = async (req, res, next) => {
       },
       { runValidators: true }
     );
-
 
     emailQueue.add({
       email: user.Email,
