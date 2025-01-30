@@ -119,7 +119,7 @@ const distributeRewards = async (session, userId, amount) => {
       UserId: referrer._id,
       triggeredBy: currentUser._id,
       amount: reward,
-      status: "Success",
+      status: "Pending",
       type: "referral",
     });
 
@@ -161,6 +161,7 @@ const addFund = async (req, res, next) => {
     req.body.UserId = req.user;
     req.body.status = "Success";
     req.body.type = "addfund";
+    req.body.LastPaymentDate = new Date();
 
     let user = await UserModal.findById(req.user);
 
@@ -313,13 +314,20 @@ const AddProfit = async (req, res, next) => {
       return next(new AppErr(err.errors[0].msg, 403));
     }
 
-    let { amount, token, UserId } = req.body;
+    let { amount, token, UserId, transactionId } = req.body;
 
     req.body.UserId = UserId;
     req.body.status = "Success";
     req.body.type = "profit";
 
     let fund = await TransactionModal.create(req.body);
+    await TransactionModal.findByIdAndUpdate(
+      transactionId,
+      {
+        LastPaymentDate: new Date(),
+      },
+      { new: true }
+    );
 
     return res.status(200).json({
       status: true,

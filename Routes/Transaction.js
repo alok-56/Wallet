@@ -35,6 +35,7 @@ TransactionRouter.post(
   "/users/addprofit",
   body("amount").notEmpty().withMessage("amount is required"),
   body("UserId").notEmpty().withMessage("UserId is required"),
+  body("transactionId").notEmpty().withMessage("transactionId is required"),
   IsAdmin,
   AddProfit
 );

@@ -8,6 +8,13 @@ const {
   UpdateUser,
   TotalCount,
   DownlineTree,
+  totalReferralCountByMonth,
+  totalReferralAmountByMonth,
+  totalTransactionCountByMonth,
+  totalTransactionAmountByMonth,
+  UpdateAdminDetails,
+  PendingPayouts,
+  ApprovedPayouts,
 } = require("../Controller/Admin");
 const IsAdmin = require("../Middleware/IsAdmin");
 const AdminRouter = express.Router();
@@ -42,5 +49,23 @@ AdminRouter.patch("/update/user/:id", IsAdmin, UpdateUser);
 
 AdminRouter.get("/app/count", IsAdmin, TotalCount);
 AdminRouter.get("/downline/tree/:userId", IsAdmin, DownlineTree);
+AdminRouter.get("/graph/referal/count", IsAdmin, totalReferralCountByMonth);
+AdminRouter.get("/graph/referal/amount", IsAdmin, totalReferralAmountByMonth);
+AdminRouter.get(
+  "/graph/transaction/count",
+  IsAdmin,
+  totalTransactionCountByMonth
+);
+AdminRouter.get(
+  "/graph/transaction/amount",
+  IsAdmin,
+  totalTransactionAmountByMonth
+);
+
+AdminRouter.patch("/update/details", IsAdmin, UpdateAdminDetails);
+
+
+AdminRouter.get("/pending/payouts", IsAdmin, PendingPayouts);
+AdminRouter.get("/approved/payouts", IsAdmin, ApprovedPayouts);
 
 module.exports = AdminRouter;

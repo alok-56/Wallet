@@ -34,6 +34,9 @@ const TransactionSchema = new Schema(
       required: true,
       default: true,
     },
+    LastPaymentDate: {
+      type: Date
+    },
   },
   {
     timestamps: true,
