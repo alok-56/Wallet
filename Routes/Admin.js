@@ -64,7 +64,6 @@ AdminRouter.get(
 
 AdminRouter.patch("/update/details", IsAdmin, UpdateAdminDetails);
 
-
 AdminRouter.get("/pending/payouts", IsAdmin, PendingPayouts);
 AdminRouter.get("/approved/payouts", IsAdmin, ApprovedPayouts);
 
