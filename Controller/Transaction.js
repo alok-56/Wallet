@@ -76,7 +76,7 @@ const distributeRewards = async (session, userId, amount) => {
   let currentUser = await UserModal.findById(userId);
   let level = 1;
   let rewardlevelmodal = await Distributionmodal.find();
-  const rewardPercentages = rewardlevelmodal.Level;
+  const rewardPercentages = rewardlevelmodal[0].Level;
   let rewardsDistributed = [];
 
   while (

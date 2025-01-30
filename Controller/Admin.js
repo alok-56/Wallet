@@ -4,6 +4,8 @@ const AppErr = require("../Helper/AppError");
 const generateToken = require("../Helper/GenerateToken");
 const UserModal = require("../Modal/Users");
 const emailQueue = require("../Helper/EmailJobs");
+const TransactionModal = require("../Modal/Transaction");
+const buildUserTree = require("../Helper/buildtree");
 
 // Sign Up
 const SignUpAdmin = async (req, res, next) => {
@@ -124,8 +126,6 @@ const AddUser = async (req, res, next) => {
           extraData: { referralName: Name },
         });
       }
-
-     
     }
 
     await user.save();
@@ -148,7 +148,6 @@ const AddUser = async (req, res, next) => {
 };
 
 // Update User
-
 const UpdateUser = async (req, res, next) => {
   try {
     let { id } = req.params;
@@ -185,36 +184,80 @@ const UpdateUser = async (req, res, next) => {
   }
 };
 
-// Get User downline Member
-
-// total commision by months
-
-// total referal by months
-
 // Get Total Api
 const TotalCount = async (req, res, next) => {
   try {
-    // active user
-    // total referral done
-    // total referall commision
-    // total funds added
-    // total profit (add fund - add profit)
-    // total transaction value
+    let activeuser = await UserModal.countDocuments({ active: true });
+    let unactiveuser = await UserModal.countDocuments({ active: false });
+    let totalreferall = await TransactionModal.countDocuments({
+      type: "referral",
+    });
+    let totalfund = await TransactionModal.aggregate([
+      { $match: { type: "addfund" } },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]);
+    let totalprofit = await TransactionModal.aggregate([
+      { $match: { type: "profit" } },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]);
+    let totalReferralCommission = await TransactionModal.aggregate([
+      { $match: { type: "referral" } },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]);
+    let totalvalue = await TransactionModal.aggregate([
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]);
+    res.json({
+      status: true,
+      code: 200,
+      data: {
+        activeUserCount: activeuser,
+        unactiveUserCount: unactiveuser,
+        totalReferralCount: totalreferall,
+        totalFundAmount: totalfund[0]?.totalAmount || 0,
+        totalProfitcredited: totalprofit[0]?.totalAmount || 0,
+        totalReferralCommission: totalReferralCommission[0]?.totalAmount || 0,
+        totalTransactionValue: totalvalue[0]?.totalAmount || 0,
+      },
+    });
   } catch (error) {
     return next(new AppErr(error.message, 500));
   }
 };
 
-// get transation by months
+// Get User downline true
+const DownlineTree = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return next(new AppErr("UserId is required", 400));
+    }
+    const tree = await buildUserTree(userId);
 
-//
+    if (!tree) {
+      return next(new AppErr("No tree Found", 404));
+    }
 
-//
+    res.json({ status: true, code: 200, data: tree });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// total referal count by months
+
+// total referal amount by months
+
+// get transation count by months
+
+// total transation amount by months
 
 module.exports = {
   SignUpAdmin,
   SignInAdmin,
   GetAdminProfile,
   AddUser,
-  UpdateUser
+  UpdateUser,
+  TotalCount,
+  DownlineTree,
 };

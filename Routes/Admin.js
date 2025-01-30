@@ -6,6 +6,8 @@ const {
   GetAdminProfile,
   AddUser,
   UpdateUser,
+  TotalCount,
+  DownlineTree,
 } = require("../Controller/Admin");
 const IsAdmin = require("../Middleware/IsAdmin");
 const AdminRouter = express.Router();
@@ -37,5 +39,8 @@ AdminRouter.post(
 );
 
 AdminRouter.patch("/update/user/:id", IsAdmin, UpdateUser);
+
+AdminRouter.get("/app/count", IsAdmin, TotalCount);
+AdminRouter.get("/downline/tree/:userId", IsAdmin, DownlineTree);
 
 module.exports = AdminRouter;

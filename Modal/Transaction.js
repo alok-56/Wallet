@@ -26,7 +26,7 @@ const TransactionSchema = new Schema(
     status: {
       type: String,
       required: true,
-      enum: ["Pending", "Success", "Failure","Reject"],
+      enum: ["Pending", "Success", "Failure", "Reject"],
       default: "Pending",
     },
     active: {

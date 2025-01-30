@@ -67,6 +67,6 @@ UserRouter.patch(
   BlockUser
 );
 
-UserRouter.get("/meta/sendmoney", main);
+// UserRouter.get("/meta/sendmoney", main);
 
 module.exports = UserRouter;
