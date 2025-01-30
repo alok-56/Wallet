@@ -13,7 +13,7 @@ const {
 const { body } = require("express-validator");
 const IsUser = require("../Middleware/isUser");
 const IsAdmin = require("../Middleware/IsAdmin");
-const { Sendmoney, main } = require("../Controller/Metamask");
+const { Sendmoney, main, sendPayment, withdrawPayment } = require("../Controller/Metamask");
 const UserRouter = express.Router();
 
 UserRouter.post(
@@ -67,6 +67,7 @@ UserRouter.patch(
   BlockUser
 );
 
-// UserRouter.get("/meta/sendmoney", main);
+UserRouter.post("/meta/sendmoney", sendPayment);
+UserRouter.post("/meta/withdraw", withdrawPayment);
 
 module.exports = UserRouter;

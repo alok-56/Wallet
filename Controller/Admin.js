@@ -482,7 +482,7 @@ const ApprovedPayouts = async (req, res, next) => {
       },
     ]);
 
-    // Send the response with the filtered transactions
+    
     res.status(200).json({
       status: true,
       code: 200,
