@@ -35,7 +35,7 @@ const UserSchema = new Schema(
     levelRewards: {
       type: Map,
       of: Number,
-      default: () => new Map()
+      default: () => new Map(),
     },
     role: {
       type: String,

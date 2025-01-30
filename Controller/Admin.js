@@ -2,6 +2,8 @@ const { validationResult } = require("express-validator");
 const AdminModal = require("../Modal/Admin");
 const AppErr = require("../Helper/AppError");
 const generateToken = require("../Helper/GenerateToken");
+const UserModal = require("../Modal/Users");
+const emailQueue = require("../Helper/EmailJobs");
 
 // Sign Up
 const SignUpAdmin = async (req, res, next) => {
@@ -31,8 +33,8 @@ const SignUpAdmin = async (req, res, next) => {
     return next(new AppErr(error.message, 500));
   }
 };
-// Sign In
 
+// Sign In
 const SignInAdmin = async (req, res, next) => {
   try {
     let err = validationResult(req);
@@ -80,8 +82,139 @@ const GetAdminProfile = async (req, res, next) => {
   }
 };
 
+// Add User
+const AddUser = async (req, res, next) => {
+  try {
+    let err = validationResult(req);
+    if (err.errors.length > 0) {
+      return next(new AppErr(err.errors[0].msg, 403));
+    }
+
+    const newReferralCode = Math.random()
+      .toString(36)
+      .substring(2, 7)
+      .toUpperCase();
+
+    let { Name, Email, Password, referralCode } = req.body;
+
+    let emailcheck = await UserModal.findOne({ Email: Email });
+    if (emailcheck) {
+      return next(new AppErr("Email Already Exists", 400));
+    }
+
+    const user = new UserModal({
+      Name,
+      Email,
+      Password,
+      referralCode: newReferralCode,
+    });
+
+    //add referal downline
+    if (referralCode) {
+      const referrer = await UserModal.findOne({ referralCode });
+      if (referrer) {
+        user.referredBy = referralCode;
+        referrer.downline.push(user._id);
+        await referrer.save();
+
+        emailQueue.add({
+          email: referrer?.Email,
+          subject: "ReferralPersonJoined",
+          name: referrer.Name,
+          extraData: { referralName: Name },
+        });
+      }
+
+     
+    }
+
+    await user.save();
+    emailQueue.add({
+      email: Email,
+      subject: "WelcomeUser",
+      name: Name,
+      extraData: null,
+    });
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: "User Added Successfully",
+      data: user,
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// Update User
+
+const UpdateUser = async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    let { Name, Email, Password } = req.body;
+
+    let user = await UserModal.findById(id);
+    if (!user) {
+      return next(new AppErr("User Not Found", 404));
+    }
+
+    if (Email) {
+      let emailcheck = await UserModal.findOne({ Email: Email });
+      if (emailcheck) {
+        return next(new AppErr("Email Already Exists", 400));
+      }
+    }
+
+    await UserModal.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: req.body,
+      }
+    );
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: "User Updated Successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// Get User downline Member
+
+// total commision by months
+
+// total referal by months
+
+// Get Total Api
+const TotalCount = async (req, res, next) => {
+  try {
+    // active user
+    // total referral done
+    // total referall commision
+    // total funds added
+    // total profit (add fund - add profit)
+    // total transaction value
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// get transation by months
+
+//
+
+//
+
 module.exports = {
   SignUpAdmin,
   SignInAdmin,
   GetAdminProfile,
+  AddUser,
+  UpdateUser
 };

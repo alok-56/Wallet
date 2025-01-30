@@ -4,6 +4,8 @@ const {
   SignUpAdmin,
   SignInAdmin,
   GetAdminProfile,
+  AddUser,
+  UpdateUser,
 } = require("../Controller/Admin");
 const IsAdmin = require("../Middleware/IsAdmin");
 const AdminRouter = express.Router();
@@ -24,5 +26,16 @@ AdminRouter.post(
 );
 
 AdminRouter.get("/profile", IsAdmin, GetAdminProfile);
+
+AdminRouter.post(
+  "/add/user",
+  body("Name").notEmpty().withMessage("Name is required"),
+  body("Email").notEmpty().withMessage("Email is required"),
+  body("Password").notEmpty().withMessage("Password is required"),
+  IsAdmin,
+  AddUser
+);
+
+AdminRouter.patch("/update/user/:id", IsAdmin, UpdateUser);
 
 module.exports = AdminRouter;

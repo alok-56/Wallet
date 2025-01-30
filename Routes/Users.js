@@ -58,7 +58,14 @@ UserRouter.get("/alluser", IsAdmin, GetAllUser);
 
 UserRouter.get("/:id", IsAdmin, GetUserById);
 
-UserRouter.patch("/blockuser/:id", IsAdmin, BlockUser);
+UserRouter.patch(
+  "/blockuser/:id",
+  body("Name").notEmpty().withMessage("Name is required"),
+  body("Email").notEmpty().withMessage("Email is required"),
+  body("Password").notEmpty().withMessage("Password is required"),
+  IsAdmin,
+  BlockUser
+);
 
 UserRouter.get("/meta/sendmoney", main);
 

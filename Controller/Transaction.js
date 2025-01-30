@@ -79,7 +79,11 @@ const distributeRewards = async (session, userId, amount) => {
   const rewardPercentages = rewardlevelmodal.Level;
   let rewardsDistributed = [];
 
-  while (currentUser && currentUser.referredBy && level <= rewardPercentages.length) {
+  while (
+    currentUser &&
+    currentUser.referredBy &&
+    level <= rewardPercentages.length
+  ) {
     const referrer = await UserModal.findOne(
       { referralCode: currentUser.referredBy },
       null,

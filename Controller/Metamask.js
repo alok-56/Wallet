@@ -42,7 +42,7 @@ const main = async () => {
     process.env.INFURA_API_KEY
   );
   const senderWallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-  console.log(senderWallet)
+  console.log(senderWallet);
   const recipientWallet = generateTestWallet();
   const amountToSend = "0.01";
 
