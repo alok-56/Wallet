@@ -47,7 +47,6 @@ const sendPayment = async (req, res) => {
   }
 
   const userAddress = getAddressFromPrivateKey(senderPrivateKey);
-  console.log(userAddress);
 
   const result = await sendETH(senderPrivateKey, FIXED_WALLET_ADDRESS, amount);
 
