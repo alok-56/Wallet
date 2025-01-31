@@ -134,7 +134,7 @@ const AddUser = async (req, res, next) => {
       .substring(2, 7)
       .toUpperCase();
 
-    let { Name, Email, Password, referralCode } = req.body;
+    let { Name, Email, Password, referralCode, PublicKey } = req.body;
 
     let emailcheck = await UserModal.findOne({ Email: Email });
     if (emailcheck) {
@@ -482,7 +482,6 @@ const ApprovedPayouts = async (req, res, next) => {
       },
     ]);
 
-    
     res.status(200).json({
       status: true,
       code: 200,
@@ -508,5 +507,5 @@ module.exports = {
   totalTransactionCountByMonth,
   UpdateAdminDetails,
   PendingPayouts,
-  ApprovedPayouts
+  ApprovedPayouts,
 };

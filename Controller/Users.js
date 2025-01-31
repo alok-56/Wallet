@@ -19,7 +19,7 @@ const SignUp = async (req, res, next) => {
       .substring(2, 7)
       .toUpperCase();
 
-    let { Name, Email, Password, referralCode } = req.body;
+    let { Name, Email, Password, referralCode, PublicKey } = req.body;
 
     let emailcheck = await UserModal.findOne({ Email: Email });
     if (emailcheck) {
@@ -262,22 +262,12 @@ const GetUserById = async (req, res, next) => {
 const BlockUser = async (req, res, next) => {
   try {
     let { id } = req.params;
-    await UserModal.updateOne(
-      {
-        _id: id,
-      },
-      {
-        $set: {
-          active: false,
-        },
-      },
-      { runValidators: true }
-    );
+    await UserModal.findByIdAndDelete(id);
 
     res.status(200).json({
       status: true,
       code: 200,
-      message: "User Blocked  Successfully",
+      message: "User Deleted  Successfully",
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
