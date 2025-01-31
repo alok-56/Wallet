@@ -432,6 +432,65 @@ const Approvereferal = async (req, res, next) => {
   }
 };
 
+// Add fund by Admin
+const addFundbyAdmin = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Validation
+    let err = validationResult(req);
+    if (err.errors.length > 0) {
+      return next(new AppErr(err.errors[0].msg, 403));
+    }
+
+    let { amount, token, UserId } = req.body;
+    req.body.UserId = UserId;
+    req.body.status = "Success";
+    req.body.type = "addfund";
+    req.body.LastPaymentDate = new Date();
+
+    let user = await UserModal.findById(UserId);
+
+    let returnpercentage = await CommisionModal.findOne({
+      $and: [{ min: { $lt: amount } }, { max: { $gt: amount } }],
+    });
+
+    if (!returnpercentage) {
+      return next(new AppErr("No commission found for your amount"));
+    }
+
+    req.body.returnPercentage = returnpercentage.commision;
+
+    const fundTransaction = new TransactionModal(req.body);
+    await fundTransaction.save({ session });
+
+    const rewardsDistributed = await distributeRewards(session, UserId, amount);
+
+    emailQueue.add({
+      email: user.Email,
+      subject: "FundAdded",
+      name: user.Name,
+      extraData: { amountAdded: amount },
+    });
+
+    await session.commitTransaction();
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: "Fund Added Successfully",
+      data: fundTransaction,
+      rewards: rewardsDistributed,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    return next(new AppErr(error.message, 500));
+  } finally {
+    session.endSession();
+  }
+};
+
 module.exports = {
   addFund,
   getfund,
@@ -443,4 +502,5 @@ module.exports = {
   CreateDistributionPer,
   UpdateDistributionPer,
   GetDistributionPer,
+  addFundbyAdmin,
 };

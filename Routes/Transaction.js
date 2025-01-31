@@ -5,7 +5,6 @@ const {
   addFund,
   getfund,
   myfund,
-  getEarningSources,
   getDownline,
   AddProfit,
   TransactionCount,
@@ -13,6 +12,7 @@ const {
   CreateDistributionPer,
   UpdateDistributionPer,
   GetDistributionPer,
+  addFundbyAdmin,
 } = require("../Controller/Transaction");
 const IsAdmin = require("../Middleware/IsAdmin");
 
@@ -60,5 +60,13 @@ TransactionRouter.patch(
 );
 
 TransactionRouter.get("/transaction/get", IsAdmin, GetDistributionPer);
+
+TransactionRouter.post(
+  "/addfund/admin",
+  body("amount").notEmpty().withMessage("amount is required"),
+  body("UserId").notEmpty().withMessage("UserId is required"),
+  IsAdmin,
+  addFundbyAdmin
+);
 
 module.exports = TransactionRouter;

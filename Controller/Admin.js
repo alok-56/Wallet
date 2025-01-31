@@ -261,7 +261,6 @@ const TotalCount = async (req, res, next) => {
     return next(new AppErr(error.message, 500));
   }
 };
-
 // Get User downline true
 const DownlineTree = async (req, res, next) => {
   try {
@@ -492,6 +491,7 @@ const ApprovedPayouts = async (req, res, next) => {
     return next(new AppErr(error.message, 500));
   }
 };
+
 
 module.exports = {
   SignUpAdmin,

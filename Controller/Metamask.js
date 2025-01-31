@@ -100,8 +100,6 @@ const checkBalance = async (address) => {
   }
 };
 
-// Example usage
-
 module.exports = {
   sendPayment,
   withdrawPayment,
