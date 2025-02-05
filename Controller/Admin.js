@@ -152,10 +152,11 @@ const AddUser = async (req, res, next) => {
     //add referal downline
     if (referralCode) {
       const referrer = await UserModal.findOne({ referralCode });
-      if(Rank>=referrer.Rank || Rank<0){
-        return next(new AppErr(`Rank Must be Less than ${referrer.Rank} `, 400));
-      }
+      
       if (referrer) {
+        if(Rank>=referrer.Rank || Rank<0){
+          return next(new AppErr(`Rank Must be Less than ${referrer.Rank} `, 400));
+        }
         user.referredBy = referralCode;
         referrer.downline.push(user._id);
         await referrer.save();
