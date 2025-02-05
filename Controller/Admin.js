@@ -145,6 +145,7 @@ const AddUser = async (req, res, next) => {
       Email,
       Password,
       referralCode: newReferralCode,
+      PublicKey,
       Rank,
     });
 
