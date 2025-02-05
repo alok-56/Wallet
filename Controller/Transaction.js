@@ -5,85 +5,40 @@ const UserModal = require("../Modal/Users");
 const TransactionModal = require("../Modal/Transaction");
 const { default: mongoose } = require("mongoose");
 const emailQueue = require("../Helper/EmailJobs");
-const Distributionmodal = require("../Modal/Distribution");
-
-const CreateDistributionPer = async (req, res, next) => {
-  try {
-    let { Level } = req.body;
-
-    if (Level.length === 0) {
-      return next(new AppErr("Level cannot be empty", 400));
-    }
-
-    let leveltype = await Distributionmodal.find();
-    if (leveltype.length === 1) {
-      return next(new AppErr("Level should be only one", 400));
-    }
-
-    let response = await Distributionmodal.create(req.body);
-
-    response.status(200).json({
-      status: true,
-      code: 200,
-      data: res,
-      message: "Distribution created Successfully",
-    });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-const UpdateDistributionPer = async (req, res, next) => {
-  try {
-    let { Level } = req.body;
-    let { id } = req.params;
-
-    if (Level.length === 0) {
-      return next(new AppErr("Level cannot be empty", 400));
-    }
-
-    let response = await Distributionmodal.findByIdAndUpdate(id, req.body, {
-      new: true,
-    });
-
-    res.status(200).json({
-      status: true,
-      code: 200,
-      data: response,
-      message: "Distribution Updated Successfully",
-    });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-const GetDistributionPer = async (req, res, next) => {
-  try {
-    let leveltype = await Distributionmodal.find();
-
-    res.status(200).json({
-      status: true,
-      code: 200,
-      data: leveltype,
-      message: "Distribution Fetched Successfully",
-    });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
+const Distributionmodal = require("../Modal/Ranking");
 
 const distributeRewards = async (session, userId, amount) => {
   let currentUser = await UserModal.findById(userId);
-  let level = 1;
-  let rewardlevelmodal = await Distributionmodal.find();
-  const rewardPercentages = rewardlevelmodal[0].Level;
+  let level = 0;
+  let rewardlevelmodal = await Distributionmodal.find().sort({ Rank: 1 });
   let rewardsDistributed = [];
 
-  while (
-    currentUser &&
-    currentUser.referredBy &&
-    level <= rewardPercentages.length
-  ) {
+  const currentUserCommission =
+    rewardlevelmodal[currentUser.Rank - 1]?.Commision || 0;
+
+  rewardsDistributed.push({
+    referrerId: currentUser._id,
+    reward: (amount * currentUserCommission) / 100,
+  });
+
+  const transaction = new TransactionModal({
+    UserId: currentUser._id,
+    triggeredBy: currentUser._id,
+    amount: currentUserCommission,
+    status: "Pending",
+    type: "referral",
+  });
+  console.log({
+    Rank: currentUser.Rank,
+    commsion: currentUserCommission,
+    rewars: (amount * currentUserCommission) / 100,
+  });
+
+  await transaction.save({ session });
+  currentUser.rewards += (amount * currentUserCommission) / 100;
+  await currentUser.save();
+
+  while (currentUser && currentUser.referredBy && level <= 10) {
     const referrer = await UserModal.findOne(
       { referralCode: currentUser.referredBy },
       null,
@@ -95,7 +50,18 @@ const distributeRewards = async (session, userId, amount) => {
       break;
     }
 
-    const reward = (amount * rewardPercentages[level - 1]) / 100;
+    // const referrerLevel = await getUserLevel(referrer, session);
+    const referrerCommission =
+      rewardlevelmodal[referrer.Rank - 1]?.Commision || 0;
+
+    reward = (amount * (referrerCommission - currentUserCommission)) / 100;
+
+    console.log({
+      Rank: referrer.Rank,
+      commsion: referrerCommission,
+      rewars: reward,
+    });
+
     rewardsDistributed.push({ referrerId: referrer._id, reward });
 
     if (!referrer.levelRewards || !(referrer.levelRewards instanceof Map)) {
@@ -105,7 +71,6 @@ const distributeRewards = async (session, userId, amount) => {
       `Level ${level}`,
       (referrer.levelRewards.get(`Level ${level}`) || 0) + reward
     );
-
     referrer.rewards += reward;
 
     try {
@@ -165,16 +130,6 @@ const addFund = async (req, res, next) => {
 
     let user = await UserModal.findById(req.user);
 
-    let returnpercentage = await CommisionModal.findOne({
-      $and: [{ min: { $lt: amount } }, { max: { $gt: amount } }],
-    });
-
-    if (!returnpercentage) {
-      return next(new AppErr("No commission found for your amount"));
-    }
-
-    req.body.returnPercentage = returnpercentage.commision;
-
     const fundTransaction = new TransactionModal(req.body);
     await fundTransaction.save({ session });
 
@@ -209,7 +164,6 @@ const addFund = async (req, res, next) => {
 };
 
 // get fund
-
 const getfund = async (req, res, next) => {
   try {
     let { type, status, userId } = req.query;
@@ -452,16 +406,6 @@ const addFundbyAdmin = async (req, res, next) => {
 
     let user = await UserModal.findById(UserId);
 
-    let returnpercentage = await CommisionModal.findOne({
-      $and: [{ min: { $lt: amount } }, { max: { $gt: amount } }],
-    });
-
-    if (!returnpercentage) {
-      return next(new AppErr("No commission found for your amount"));
-    }
-
-    req.body.returnPercentage = returnpercentage.commision;
-
     const fundTransaction = new TransactionModal(req.body);
     await fundTransaction.save({ session });
 
@@ -499,8 +443,5 @@ module.exports = {
   AddProfit,
   TransactionCount,
   Approvereferal,
-  CreateDistributionPer,
-  UpdateDistributionPer,
-  GetDistributionPer,
   addFundbyAdmin,
 };

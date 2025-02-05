@@ -22,6 +22,10 @@ const UserSchema = new Schema(
     referredBy: {
       type: String,
     },
+    Rank: {
+      type: Number,
+      required: true,
+    },
     downline: [
       {
         type: mongoose.Schema.Types.ObjectId,

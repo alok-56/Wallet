@@ -1,9 +1,8 @@
-// create Commision
-
 const { validationResult } = require("express-validator");
 const AppErr = require("../Helper/AppError");
 const CommisionModal = require("../Modal/Commision");
 
+// create Commision
 const CreateCommision = async (req, res, next) => {
   try {
     let err = validationResult(req);

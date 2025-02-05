@@ -1,6 +1,6 @@
 const UserModal = require("../Modal/Users");
 
-const buildUserTree = async (userId, level = 1) => {
+const buildUserTree = async (userId, level = 0) => {
   const user = await UserModal.findById(userId).populate("downline");
   if (!user) return null;
 
@@ -8,6 +8,8 @@ const buildUserTree = async (userId, level = 1) => {
     userId: user._id,
     name: user.Name,
     level,
+    amount: user.rewards,
+    Rank:user.Rank,
     downline: [],
   };
 
@@ -21,5 +23,4 @@ const buildUserTree = async (userId, level = 1) => {
   return userTree;
 };
 
-
-module.exports=buildUserTree
+module.exports = buildUserTree;

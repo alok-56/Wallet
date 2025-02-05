@@ -19,7 +19,7 @@ const SignUp = async (req, res, next) => {
       .substring(2, 7)
       .toUpperCase();
 
-    let { Name, Email, Password, referralCode, PublicKey } = req.body;
+    let { Name, Email, Password, referralCode, PublicKey, Rank } = req.body;
 
     let emailcheck = await UserModal.findOne({ Email: Email });
     if (emailcheck) {
@@ -31,11 +31,18 @@ const SignUp = async (req, res, next) => {
       Email,
       Password,
       referralCode: newReferralCode,
+      PublicKey,
+      Rank,
     });
 
     //add referal downline
     if (referralCode) {
       const referrer = await UserModal.findOne({ referralCode });
+    
+
+      if(Rank>=referrer.Rank || Rank<0){
+        return next(new AppErr(`Rank Must be Less than ${referrer.Rank} `, 400));
+      }
       if (referrer) {
         user.referredBy = referralCode;
         referrer.downline.push(user._id);

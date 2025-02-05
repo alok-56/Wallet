@@ -2,8 +2,12 @@ const { Schema, default: mongoose } = require("mongoose");
 
 const DistributionSchema = new Schema(
   {
-    Level: {
-      type: [],
+    Rank: {
+      type: Number,
+      required: true,
+    },
+    Commision: {
+      type: Number,
       required: true,
     },
   },
@@ -12,5 +16,5 @@ const DistributionSchema = new Schema(
   }
 );
 
-const Distributionmodal = mongoose.model("distribution", DistributionSchema);
+const Distributionmodal = mongoose.model("Ranking", DistributionSchema);
 module.exports = Distributionmodal;

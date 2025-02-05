@@ -2,11 +2,11 @@ const { Schema, default: mongoose } = require("mongoose");
 
 const commisionSchema = new Schema(
   {
-    min: {
-      type: Number,
+    UserId: {
+      type: String,
       required: true,
     },
-    max: {
+    amount: {
       type: Number,
       required: true,
     },

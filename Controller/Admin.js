@@ -85,7 +85,6 @@ const GetAdminProfile = async (req, res, next) => {
 };
 
 // Update Admin Details
-
 const UpdateAdminDetails = async (req, res, next) => {
   try {
     let { Name, Email, Password } = req.body;
@@ -134,7 +133,7 @@ const AddUser = async (req, res, next) => {
       .substring(2, 7)
       .toUpperCase();
 
-    let { Name, Email, Password, referralCode, PublicKey } = req.body;
+    let { Name, Email, Password, referralCode, PublicKey, Rank } = req.body;
 
     let emailcheck = await UserModal.findOne({ Email: Email });
     if (emailcheck) {
@@ -146,6 +145,7 @@ const AddUser = async (req, res, next) => {
       Email,
       Password,
       referralCode: newReferralCode,
+      Rank,
     });
 
     //add referal downline
@@ -261,6 +261,7 @@ const TotalCount = async (req, res, next) => {
     return next(new AppErr(error.message, 500));
   }
 };
+
 // Get User downline true
 const DownlineTree = async (req, res, next) => {
   try {
@@ -279,6 +280,7 @@ const DownlineTree = async (req, res, next) => {
     return next(new AppErr(error.message, 500));
   }
 };
+
 // total referal count by months
 const totalReferralCountByMonth = async (req, res, next) => {
   try {
@@ -288,7 +290,7 @@ const totalReferralCountByMonth = async (req, res, next) => {
         $project: {
           monthYear: {
             $dateToString: {
-              format: "%B %Y", // Full month name and year (e.g., January 2023)
+              format: "%B %Y",
               date: "$createdAt",
             },
           },
@@ -491,7 +493,6 @@ const ApprovedPayouts = async (req, res, next) => {
     return next(new AppErr(error.message, 500));
   }
 };
-
 
 module.exports = {
   SignUpAdmin,
