@@ -128,10 +128,7 @@ const AddUser = async (req, res, next) => {
       return next(new AppErr(err.errors[0].msg, 403));
     }
 
-    const newReferralCode = Math.random()
-      .toString(36)
-      .substring(2, 7)
-      .toUpperCase();
+    const newReferralCode = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
 
     let { Name, Email, Password, referralCode, PublicKey, Rank } = req.body;
 
