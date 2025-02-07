@@ -13,7 +13,7 @@ const distributeRewards = async (session, userId, amount) => {
   let rewardlevelmodal = await Distributionmodal.find().sort({ Rank: 1 });
   let rewardsDistributed = [];
 
-  const currentUserCommission =
+  let currentUserCommission =
     rewardlevelmodal[currentUser.Rank - 1]?.Commision || 0;
 
   rewardsDistributed.push({
@@ -27,11 +27,6 @@ const distributeRewards = async (session, userId, amount) => {
     amount: currentUserCommission,
     status: "Pending",
     type: "referral",
-  });
-  console.log({
-    Rank: currentUser.Rank,
-    commsion: currentUserCommission,
-    rewars: (amount * currentUserCommission) / 100,
   });
 
   await transaction.save({ session });
@@ -50,18 +45,9 @@ const distributeRewards = async (session, userId, amount) => {
       break;
     }
 
-    // const referrerLevel = await getUserLevel(referrer, session);
     const referrerCommission =
       rewardlevelmodal[referrer.Rank - 1]?.Commision || 0;
-
     reward = (amount * (referrerCommission - currentUserCommission)) / 100;
-
-    console.log({
-      Rank: referrer.Rank,
-      commsion: referrerCommission,
-      rewars: reward,
-    });
-
     rewardsDistributed.push({ referrerId: referrer._id, reward });
 
     if (!referrer.levelRewards || !(referrer.levelRewards instanceof Map)) {
@@ -89,7 +75,7 @@ const distributeRewards = async (session, userId, amount) => {
     });
 
     await transaction.save({ session });
-
+    currentUserCommission = referrerCommission;
     currentUser = referrer;
     level++;
   }
