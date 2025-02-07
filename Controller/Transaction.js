@@ -58,6 +58,7 @@ const distributeRewards = async (session, userId, amount) => {
 
     const referrerCommission =
       rewardlevelmodal[referrer.Rank - 1]?.Commision || 0;
+
     const currentrefeeredcommision =
       rewardlevelmodal[currentreferby.Rank - 1]?.Commision || 0;
 
@@ -67,6 +68,7 @@ const distributeRewards = async (session, userId, amount) => {
     if (!referrer.levelRewards || !(referrer.levelRewards instanceof Map)) {
       referrer.levelRewards = new Map();
     }
+
     referrer.levelRewards.set(
       `Level ${level}`,
       (referrer.levelRewards.get(`Level ${level}`) || 0) + reward
