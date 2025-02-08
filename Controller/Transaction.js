@@ -40,16 +40,16 @@ const distributeRewards = async (session, userId, amount) => {
       { session }
     );
 
-    let currentreferby = await UserModal.findOne(
-      { referralCode: referrer.referredBy },
-      null,
-      { session }
-    );
+    // let currentreferby = await UserModal.findOne(
+    //   { referralCode: referrer.referredBy },
+    //   null,
+    //   { session }
+    // );
 
-    if (!currentreferby) {
-      await logReferralFailure(userId, amount, session);
-      break;
-    }
+    // if (!currentreferby) {
+    //   await logReferralFailure(userId, amount, session);
+    //   break;
+    // }
 
     if (!referrer) {
       await logReferralFailure(userId, amount, session);
@@ -59,10 +59,10 @@ const distributeRewards = async (session, userId, amount) => {
     const referrerCommission =
       rewardlevelmodal[referrer.Rank - 1]?.Commision || 0;
 
-    const currentrefeeredcommision =
-      rewardlevelmodal[currentreferby.Rank - 1]?.Commision || 0;
+    // const currentrefeeredcommision =
+    //   rewardlevelmodal[currentreferby.Rank - 1]?.Commision || 0;
 
-    reward = (amount * (currentrefeeredcommision - referrerCommission)) / 100;
+    reward = (amount * (referrerCommission - currentUserCommission)) / 100;
     rewardsDistributed.push({ referrerId: referrer._id, reward });
 
     if (!referrer.levelRewards || !(referrer.levelRewards instanceof Map)) {
@@ -91,6 +91,7 @@ const distributeRewards = async (session, userId, amount) => {
     });
 
     await transaction.save({ session });
+    currentUserCommission = referrerCommission;
     currentUser = referrer;
     level++;
   }
