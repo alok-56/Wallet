@@ -1,6 +1,6 @@
 const { Schema, default: mongoose } = require("mongoose");
 
-const CommisionSchema = new Schema(
+const WithdrawSchema = new Schema(
   {
     UserId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -41,5 +41,5 @@ const CommisionSchema = new Schema(
   }
 );
 
-const CommisionModal = mongoose.model("Commision", CommisionSchema);
-module.exports = CommisionModal;
+const WithdrawModal = mongoose.model("WithdrawCommision", WithdrawSchema);
+module.exports = WithdrawModal;

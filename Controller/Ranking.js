@@ -1,8 +1,13 @@
+const { validationResult } = require("express-validator");
 const AppErr = require("../Helper/AppError");
 const Distributionmodal = require("../Modal/Ranking");
 
 const CreateRanking = async (req, res, next) => {
   try {
+    let err = validationResult(req);
+    if (err.errors.length > 0) {
+      return next(new AppErr(err.errors[0].msg, 403));
+    }
     let { Rank, Commision } = req.body;
 
     let rank = await Distributionmodal.find({ Rank: Rank });
@@ -25,7 +30,7 @@ const CreateRanking = async (req, res, next) => {
 
 const UpdateRanking = async (req, res, next) => {
   try {
-    let { Rank, Commision } = req.body;
+    let { Rank, Commision, Active } = req.body;
     let { id } = req.params;
 
     let response = await Distributionmodal.findByIdAndUpdate(id, req.body, {
@@ -58,8 +63,25 @@ const GetRanking = async (req, res, next) => {
   }
 };
 
+const DeleteRanking = async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    let leveltype = await Distributionmodal.findByIdAndDelete(id);
+
+    res.status(200).json({
+      status: true,
+      code: 200,
+      data: leveltype,
+      message: "Ranking Deleted Successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
 module.exports = {
   CreateRanking,
   UpdateRanking,
   GetRanking,
+  DeleteRanking,
 };

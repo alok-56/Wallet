@@ -10,9 +10,14 @@ const DistributionSchema = new Schema(
       type: Number,
       required: true,
     },
+    Active: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
   },
   {
-    new: true,
+    timestamps: true,
   }
 );
 

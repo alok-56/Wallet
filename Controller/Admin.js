@@ -4,8 +4,11 @@ const AppErr = require("../Helper/AppError");
 const generateToken = require("../Helper/GenerateToken");
 const UserModal = require("../Modal/Users");
 const emailQueue = require("../Helper/EmailJobs");
-const TransactionModal = require("../Modal/Transaction");
 const buildUserTree = require("../Helper/buildtree");
+const UserModel = require("../Modal/Users");
+const TransactionModal = require("../Modal/Transaction");
+const CommisionModal = require("../Modal/Commision");
+const VoucherModal = require("../Modal/Voucher");
 
 // Sign Up
 const SignUpAdmin = async (req, res, next) => {
@@ -128,9 +131,6 @@ const AddUser = async (req, res, next) => {
       return next(new AppErr(err.errors[0].msg, 403));
     }
 
-    const newReferralCode =
-      Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
-
     let { Name, Email, Password, referralCode, PublicKey, Rank } = req.body;
 
     let emailcheck = await UserModal.findOne({ Email: Email });
@@ -142,7 +142,7 @@ const AddUser = async (req, res, next) => {
       Name,
       Email,
       Password,
-      referralCode: newReferralCode,
+
       PublicKey,
       Rank,
     });
@@ -193,18 +193,11 @@ const AddUser = async (req, res, next) => {
 const UpdateUser = async (req, res, next) => {
   try {
     let { id } = req.params;
-    let { Name, Email, Password } = req.body;
+    let { Name, Email, Password, Rank, PublicKey } = req.body;
 
     let user = await UserModal.findById(id);
     if (!user) {
       return next(new AppErr("User Not Found", 404));
-    }
-
-    if (Email) {
-      let emailcheck = await UserModal.findOne({ Email: Email });
-      if (emailcheck) {
-        return next(new AppErr("Email Already Exists", 400));
-      }
     }
 
     await UserModal.updateOne(
@@ -226,41 +219,49 @@ const UpdateUser = async (req, res, next) => {
   }
 };
 
-// Get Total Api
-const TotalCount = async (req, res, next) => {
+// Get All User
+const GetAllUser = async (req, res, next) => {
   try {
-    let activeuser = await UserModal.countDocuments({ active: true });
-    let unactiveuser = await UserModal.countDocuments({ active: false });
-    let totalreferall = await TransactionModal.countDocuments({
-      type: "referral",
+    let user = await UserModal.find();
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: "User Fetched  Successfully",
+      data: user,
     });
-    let totalfund = await TransactionModal.aggregate([
-      { $match: { type: "addfund" } },
-      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-    ]);
-    let totalprofit = await TransactionModal.aggregate([
-      { $match: { type: "profit" } },
-      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-    ]);
-    let totalReferralCommission = await TransactionModal.aggregate([
-      { $match: { type: "referral" } },
-      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-    ]);
-    let totalvalue = await TransactionModal.aggregate([
-      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-    ]);
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// Get User By Id
+const GetUserById = async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    let user = await UserModal.findById(id);
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: "User Fetched  Successfully",
+      data: user,
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// Block User
+const BlockUser = async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    await UserModal.findByIdAndDelete(id);
+
     res.status(200).json({
       status: true,
       code: 200,
-      data: {
-        activeUserCount: activeuser,
-        unactiveUserCount: unactiveuser,
-        totalReferralCount: totalreferall,
-        totalFundAmount: totalfund[0]?.totalAmount || 0,
-        totalProfitcredited: totalprofit[0]?.totalAmount || 0,
-        totalReferralCommission: totalReferralCommission[0]?.totalAmount || 0,
-        totalTransactionValue: totalvalue[0]?.totalAmount || 0,
-      },
+      message: "User Activity updated  Successfully",
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
@@ -286,213 +287,297 @@ const DownlineTree = async (req, res, next) => {
   }
 };
 
-// total referal count by months
-const totalReferralCountByMonth = async (req, res, next) => {
+// Admin Count
+const AdminDashboardCount = async (req, res, next) => {
   try {
-    const referralCount = await TransactionModal.aggregate([
-      { $match: { type: "referral" } },
-      {
-        $project: {
-          monthYear: {
-            $dateToString: {
-              format: "%B %Y",
-              date: "$createdAt",
-            },
-          },
-        },
-      },
+    const totalMembers = await UserModel.countDocuments();
+    const totalActive = await UserModel.countDocuments({ active: true });
+    const totalInactive = await UserModel.countDocuments({ active: false });
+
+    const totalTransaction = await TransactionModal.aggregate([
       {
         $group: {
-          _id: "$monthYear", // Use monthYear as the custom _id
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-      {
-        $project: {
-          monthYear: "$_id", // Rename _id to monthYear
-          count: 1,
-          _id: 0, // Remove the default _id
-        },
-      },
-    ]);
-
-    res.status(200).json({ status: true, code: 200, data: referralCount });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-const totalReferralAmountByMonth = async (req, res, next) => {
-  try {
-    const referralAmount = await TransactionModal.aggregate([
-      { $match: { type: "referral" } },
-      {
-        $project: {
-          monthYear: {
-            $dateToString: {
-              format: "%B %Y", // Full month name and year (e.g., January 2023)
-              date: "$createdAt",
-            },
-          },
-          amount: 1,
-        },
-      },
-      {
-        $group: {
-          _id: "$monthYear", // Use monthYear as the custom _id
+          _id: null,
           totalAmount: { $sum: "$amount" },
         },
       },
-      { $sort: { _id: 1 } },
+    ]);
+
+    const totalCommision = await CommisionModal.aggregate([
       {
-        $project: {
-          monthYear: "$_id", // Rename _id to monthYear
-          totalAmount: 1,
-          _id: 0, // Remove the default _id
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$commision" },
         },
       },
     ]);
 
-    res.status(200).json({ status: true, code: 200, data: referralAmount });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-const totalTransactionCountByMonth = async (req, res, next) => {
-  try {
-    const transactionCount = await TransactionModal.aggregate([
+    const totalPaid = await VoucherModal.aggregate([
       {
-        $project: {
-          monthYear: {
-            $dateToString: {
-              format: "%B %Y", // Full month name and year (e.g., January 2023)
-              date: "$createdAt",
-            },
-          },
-        },
+        $match: { status: "Paid" },
       },
       {
         $group: {
-          _id: "$monthYear", // Use monthYear as the custom _id
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-      {
-        $project: {
-          monthYear: "$_id", // Rename _id to monthYear
-          count: 1,
-          _id: 0, // Remove the default _id
-        },
-      },
-    ]);
-
-    res.status(200).json({ status: true, code: 200, data: transactionCount });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-const totalTransactionAmountByMonth = async (req, res, next) => {
-  try {
-    const transactionAmount = await TransactionModal.aggregate([
-      {
-        $project: {
-          monthYear: {
-            $dateToString: {
-              format: "%B %Y",
-              date: "$createdAt",
-            },
-          },
-          amount: 1,
-        },
-      },
-      {
-        $group: {
-          _id: "$monthYear",
+          _id: null,
           totalAmount: { $sum: "$amount" },
         },
       },
-      { $sort: { _id: 1 } },
+    ]);
+
+    const totaltransfer = await VoucherModal.aggregate([
       {
-        $project: {
-          monthYear: "$_id",
-          totalAmount: 1,
-          _id: 0,
+        $match: { status: "Transfer" },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" },
         },
       },
     ]);
 
-    res.status(200).json({ status: true, code: 200, data: transactionAmount });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-// Pending Payouts
-const PendingPayouts = async (req, res, next) => {
-  try {
-    const currentDate = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(currentDate.getDate() - 30);
-
-    const transactions = await TransactionModal.aggregate([
-      {
-        $match: {
-          $or: [
-            {
-              type: "addfund",
-              status: "Success",
-              LastPaymentDate: { $lte: thirtyDaysAgo },
-            },
-            {
-              type: "referral",
-              status: "Pending",
-            },
-          ],
-        },
-      },
-    ]);
-
-    // Send the response with the filtered transactions
     res.status(200).json({
       status: true,
       code: 200,
-      message: "Success",
-      data: transactions,
+      data: {
+        totalActive,
+        totalInactive,
+        totalMembers,
+        totalCommision,
+        totalTransaction,
+        totalPaid,
+        totaltransfer,
+      },
     });
   } catch (error) {
-    return next(new AppErr(error.message, 500));
+    return next(new AppErr(error.message));
   }
 };
 
-// Approved Payouts
-const ApprovedPayouts = async (req, res, next) => {
+// Trnsaction by month
+const TrnsactionBymonth = async (req, res, next) => {
   try {
-    const transactions = await TransactionModal.aggregate([
+    const monthlyTransactions = await TransactionModal.aggregate([
       {
-        $match: {
-          $or: [
-            {
-              type: "profit",
-              status: "Success",
-            },
-            {
-              type: "referral",
-              status: "Success",
-            },
-          ],
+        $group: {
+          _id: "$month",
+          totalAmount: { $sum: "$amount" },
         },
       },
+      {
+        $sort: { _id: 1 },
+      },
     ]);
+
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const monthlyData = Array(12).fill(0);
+    monthlyTransactions.forEach(({ _id, totalAmount }) => {
+      monthlyData[_id - 1] = totalAmount;
+    });
 
     res.status(200).json({
       status: true,
       code: 200,
-      message: "Success",
-      data: transactions,
+      data: {
+        lable: months,
+        data: monthlyData,
+      },
+    });
+  } catch (error) {
+    return next(new AppErr(error.message));
+  }
+};
+
+// member by month
+const MemberBymonth = async (req, res, next) => {
+  try {
+    const monthlyMembers = await UserModel.aggregate([
+      {
+        $group: {
+          _id: { $month: "$createdAt" },
+          totalCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const monthlyMemberData = Array(12).fill(0);
+    monthlyMembers.forEach(({ _id, totalCount }) => {
+      monthlyMemberData[_id - 1] = totalCount;
+    });
+
+    res.status(200).json({
+      status: true,
+      code: 200,
+      data: {
+        lable: months,
+        data: monthlyMemberData,
+      },
+    });
+  } catch (error) {
+    return next(new AppErr(error.message));
+  }
+};
+
+// commision by month
+const CommisionBymonth = async (req, res, next) => {
+  try {
+    const monthlyTransactions = await CommisionModal.aggregate([
+      {
+        $group: {
+          _id: "$month",
+          totalAmount: { $sum: "$commision" },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const monthlyData = Array(12).fill(0);
+    monthlyTransactions.forEach(({ _id, totalAmount }) => {
+      monthlyData[_id - 1] = totalAmount;
+    });
+
+    res.status(200).json({
+      status: true,
+      code: 200,
+      data: {
+        lable: months,
+        data: monthlyData,
+      },
+    });
+  } catch (error) {
+    return next(new AppErr(error.message));
+  }
+};
+
+// Total balance Report
+
+const TotalBalanceReport = async (req, res, next) => {
+  try {
+    const voucherTotals = await VoucherModal.aggregate([
+      {
+        $group: {
+          _id: {
+            userId: "$UserId",
+            status: "$status",
+          },
+          totalAmount: { $sum: "$amount" },
+        },
+      },
+    ]);
+    const creditTotals = await TransactionModal.aggregate([
+      { $match: { type: "credit" } },
+      {
+        $group: {
+          _id: "$UserId",
+          totalCredit: { $sum: "$amount" },
+        },
+      },
+    ]);
+
+    const users = await UserModal.find({}).lean();
+
+    let userMap = {};
+
+    voucherTotals.forEach((item) => {
+      const userId = item._id.userId.toString();
+      if (!userMap[userId]) {
+        userMap[userId] = {
+          totalPaid: 0,
+          totalTransferred: 0,
+          totalCredit: 0,
+          user: null,
+        };
+      }
+      if (item._id.status === "Paid") {
+        userMap[userId].totalPaid = item.totalAmount;
+      }
+      if (item._id.status === "Transfer") {
+        userMap[userId].totalTransferred = item.totalAmount;
+      }
+    });
+
+    creditTotals.forEach((item) => {
+      const userId = item._id.toString();
+      if (!userMap[userId]) {
+        userMap[userId] = {
+          totalPaid: 0,
+          totalTransferred: 0,
+          totalCredit: 0,
+          user: null,
+        };
+      }
+      userMap[userId].totalCredit = item.totalCredit;
+    });
+
+    users.forEach((user) => {
+      const userId = user._id.toString();
+      if (!userMap[userId]) {
+        userMap[userId] = {
+          totalPaid: 0,
+          totalTransferred: 0,
+          totalCredit: 0,
+          user,
+        };
+      } else {
+        userMap[userId].user = user;
+      }
+    });
+
+    const result = Object.values(userMap);
+
+    res.json({
+      status: true,
+      code: 200,
+      data: result,
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
@@ -503,15 +588,16 @@ module.exports = {
   SignUpAdmin,
   SignInAdmin,
   GetAdminProfile,
-  AddUser,
-  UpdateUser,
-  TotalCount,
-  DownlineTree,
-  totalReferralAmountByMonth,
-  totalReferralCountByMonth,
-  totalTransactionAmountByMonth,
-  totalTransactionCountByMonth,
   UpdateAdminDetails,
-  PendingPayouts,
-  ApprovedPayouts,
+  GetAllUser,
+  GetUserById,
+  AddUser,
+  BlockUser,
+  UpdateUser,
+  DownlineTree,
+  AdminDashboardCount,
+  TrnsactionBymonth,
+  MemberBymonth,
+  CommisionBymonth,
+  TotalBalanceReport,
 };

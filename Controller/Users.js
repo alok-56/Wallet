@@ -5,6 +5,10 @@ const generateToken = require("../Helper/GenerateToken");
 const SendEmail = require("../Helper/Email");
 const OtpModal = require("../Modal/Otp");
 const emailQueue = require("../Helper/EmailJobs");
+const {
+  getAllLevelsBusiness,
+  getMembersAtLevel,
+} = require("../Helper/GenerateLevelMember");
 
 // Sign Up
 const SignUp = async (req, res, next) => {
@@ -13,9 +17,6 @@ const SignUp = async (req, res, next) => {
     if (err.errors.length > 0) {
       return next(new AppErr(err.errors[0].msg, 403));
     }
-
-    const newReferralCode =
-      Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
 
     let { Name, Email, Password, referralCode, PublicKey, Rank } = req.body;
 
@@ -28,7 +29,6 @@ const SignUp = async (req, res, next) => {
       Name,
       Email,
       Password,
-      referralCode: newReferralCode,
       PublicKey,
       Rank,
     });
@@ -46,14 +46,14 @@ const SignUp = async (req, res, next) => {
         user.referredBy = referralCode;
         referrer.downline.push(user._id);
         await referrer.save();
-      }
 
-      emailQueue.add({
-        email: referrer.Email,
-        subject: "ReferralPersonJoined",
-        name: referrer.Name,
-        extraData: { referralName: Name },
-      });
+        emailQueue.add({
+          email: referrer.Email,
+          subject: "ReferralPersonJoined",
+          name: referrer.Name,
+          extraData: { referralName: Name },
+        });
+      }
     }
 
     await user.save();
@@ -77,7 +77,6 @@ const SignUp = async (req, res, next) => {
 };
 
 // Sign In
-
 const SignIn = async (req, res, next) => {
   try {
     let err = validationResult(req);
@@ -110,7 +109,6 @@ const SignIn = async (req, res, next) => {
 };
 
 // Otp Send
-
 const OtpSend = async (req, res, next) => {
   try {
     let err = validationResult(req);
@@ -141,7 +139,6 @@ const OtpSend = async (req, res, next) => {
 };
 
 // Verify Otp
-
 const VeriFyOtp = async (req, res, next) => {
   try {
     let err = validationResult(req);
@@ -172,7 +169,6 @@ const VeriFyOtp = async (req, res, next) => {
 };
 
 // Password Change
-
 const PasswordChange = async (req, res, next) => {
   try {
     let err = validationResult(req);
@@ -214,7 +210,6 @@ const PasswordChange = async (req, res, next) => {
 };
 
 // Get My Profile
-
 const GetProfile = async (req, res, next) => {
   try {
     let user = await UserModal.findById(req.user);
@@ -230,50 +225,105 @@ const GetProfile = async (req, res, next) => {
   }
 };
 
-// Get All User
-const GetAllUser = async (req, res, next) => {
+// Update Profile
+const UpdateProfile = async (req, res, next) => {
   try {
-    let user = await UserModal.find();
+    let  id  = req.user;
+    console.log(id)
+    let { Name, Email, Password, PublicKey } = req.body;
 
-    return res.status(200).json({
-      status: true,
-      code: 200,
-      message: "User Fetched  Successfully",
-      data: user,
-    });
-  } catch (error) {
-    return next(new AppErr(error.message, 500));
-  }
-};
-
-// Get User By Id
-
-const GetUserById = async (req, res, next) => {
-  try {
-    let { id } = req.params;
     let user = await UserModal.findById(id);
+    if (!user) {
+      return next(new AppErr("User Not Found", 404));
+    }
+
+    if (Email) {
+      let emailcheck = await UserModal.findOne({ Email: Email });
+      if (emailcheck) {
+        return next(new AppErr("Email Already Exists", 400));
+      }
+    }
+
+    await UserModal.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: req.body,
+      }
+    );
 
     return res.status(200).json({
       status: true,
       code: 200,
-      message: "User Fetched  Successfully",
-      data: user,
+      message: "User Updated Successfully",
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
   }
 };
 
-// Block User
-const BlockUser = async (req, res, next) => {
+// Direct Member
+const GetDirectMember = async (req, res, next) => {
   try {
-    let { id } = req.params;
-    await UserModal.findByIdAndDelete(id);
+    const  id  = req.user;
+    const user = await UserModal.findById(id);
+    if (!user) {
+      return next(new AppErr("User not Found", 404));
+    }
 
-    res.status(200).json({
+    const directMembers = await UserModal.find({
+      referredBy: user.referralCode,
+    });
+
+    return res.status(200).json({
       status: true,
       code: 200,
-      message: "User Deleted  Successfully",
+      data: directMembers,
+      message: "User Fetched Successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
+// Level Wise Member
+const GetLevelWisemember = async (req, res, next) => {
+  try {
+    const  id  = req.user;
+    const { level } = req.query;
+    const user = await UserModal.findById(id);
+    if (!user) {
+      return next(new AppErr("User not Found", 404));
+    }
+    let totalBusiness = 0;
+    let allLevelsData = [];
+
+    if (!level) {
+      const { totalBusiness: business, levels } = await getAllLevelsBusiness(
+        user.referralCode
+      );
+      totalBusiness = business;
+      allLevelsData = levels;
+    } else {
+      const { totalBusiness: business, members } = await getMembersAtLevel(
+        user.referralCode,
+        parseInt(level)
+      );
+      totalBusiness = business;
+      allLevelsData.push({
+        level: parseInt(level),
+        totalBusiness: business,
+        members: members,
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      business: totalBusiness,
+      data: allLevelsData,
+      message: "User Fetched Successfully",
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
@@ -287,7 +337,7 @@ module.exports = {
   VeriFyOtp,
   PasswordChange,
   GetProfile,
-  GetAllUser,
-  GetUserById,
-  BlockUser,
+  UpdateProfile,
+  GetDirectMember,
+  GetLevelWisemember,
 };

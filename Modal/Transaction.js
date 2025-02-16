@@ -11,17 +11,15 @@ const TransactionSchema = new Schema(
       type: Number,
       required: true,
     },
-    token: {
-      type: String,
-    },
     type: {
       type: String,
       required: true,
-      enum: ["addfund", "profit", "referral"],
+      enum: ["credit", "debit"],
     },
-    triggeredBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
-    returnPercentage: {
-      type: Number,
+    Balance: {
+      type: String,
+      required: true,
+      default: 0,
     },
     status: {
       type: String,
@@ -29,13 +27,16 @@ const TransactionSchema = new Schema(
       enum: ["Pending", "Success", "Failure", "Reject"],
       default: "Pending",
     },
-    active: {
-      type: Boolean,
-      required: true,
-      default: true,
+    Remarks: {
+      type: String,
     },
-    LastPaymentDate: {
-      type: Date
+    month: {
+      type: Number,
+      required: true,
+    },
+    Year: {
+      type: Number,
+      required: true,
     },
   },
   {

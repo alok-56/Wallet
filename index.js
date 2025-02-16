@@ -5,11 +5,13 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const globalErrHandler = require("./Middleware/globalerror");
+const AppErr = require("./Helper/AppError");
 const UserRouter = require("./Routes/Users");
 const AdminRouter = require("./Routes/Admin");
-const AppErr = require("./Helper/AppError");
-const CommisionRouter = require("./Routes/Commision");
 const TransactionRouter = require("./Routes/Transaction");
+const RankingRouter = require("./Routes/Ranking");
+const NewsRouter = require("./Routes/Appnews");
+const TicketRouter = require("./Routes/Ticket");
 
 require("dotenv").config();
 Db();
@@ -27,8 +29,10 @@ app.use(express.json());
 // Route Middleware
 app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/admin", AdminRouter);
-app.use("/api/v1/commision", CommisionRouter);
 app.use("/api/v1/transaction", TransactionRouter);
+app.use("/api/v1/ranking", RankingRouter);
+app.use("/api/v1/Appnews", NewsRouter);
+app.use("/api/v1/ticket", TicketRouter);
 
 //Not Found Route Page
 app.use("*", (req, res, next) => {

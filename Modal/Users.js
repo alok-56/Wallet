@@ -36,6 +36,10 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
+    balance: {
+      type: Number,
+      default: 0,
+    },
     levelRewards: {
       type: Map,
       of: Number,
@@ -57,5 +61,24 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-const UserModal = mongoose.model("user", UserSchema);
-module.exports = UserModal;
+UserSchema.pre("save", async function (next) {
+  if (this.isNew) {
+    try {
+      const lastUser = await this.constructor
+        .findOne()
+        .sort({ referralCode: -1 });
+      const lastReferralCode = lastUser
+        ? parseInt(lastUser.referralCode, 10)
+        : 999;
+      this.referralCode = (lastReferralCode + 1).toString();
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
+});
+
+const UserModel = mongoose.model("user", UserSchema);
+module.exports = UserModel;

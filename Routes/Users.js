@@ -6,14 +6,12 @@ const {
   VeriFyOtp,
   PasswordChange,
   GetProfile,
-  GetUserById,
-  GetAllUser,
-  BlockUser,
+  UpdateProfile,
+  GetDirectMember,
+  GetLevelWisemember,
 } = require("../Controller/Users");
 const { body } = require("express-validator");
 const IsUser = require("../Middleware/isUser");
-const IsAdmin = require("../Middleware/IsAdmin");
-const { Sendmoney, main, sendPayment, withdrawPayment } = require("../Controller/Metamask");
 const UserRouter = express.Router();
 
 UserRouter.post(
@@ -54,17 +52,11 @@ UserRouter.patch(
 
 UserRouter.get("/profile", IsUser, GetProfile);
 
-UserRouter.get("/alluser", IsAdmin, GetAllUser);
+UserRouter.patch("/update", IsUser, UpdateProfile);
 
-UserRouter.get("/:id", IsAdmin, GetUserById);
+UserRouter.get("/get/direct/member", IsUser, GetDirectMember);
 
-UserRouter.delete(
-  "/blockuser/:id",
-  IsAdmin,
-  BlockUser
-);
+UserRouter.get("/get/level/member/bussiness", IsUser, GetLevelWisemember);
 
-UserRouter.post("/meta/sendmoney", sendPayment);
-UserRouter.post("/meta/withdraw", withdrawPayment);
 
 module.exports = UserRouter;
