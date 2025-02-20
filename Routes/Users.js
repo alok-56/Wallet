@@ -9,6 +9,7 @@ const {
   UpdateProfile,
   GetDirectMember,
   GetLevelWisemember,
+  UserDashboardCount,
 } = require("../Controller/Users");
 const { body } = require("express-validator");
 const IsUser = require("../Middleware/isUser");
@@ -57,6 +58,7 @@ UserRouter.patch("/update", IsUser, UpdateProfile);
 UserRouter.get("/get/direct/member", IsUser, GetDirectMember);
 
 UserRouter.get("/get/level/member/bussiness", IsUser, GetLevelWisemember);
+UserRouter.get("/get/user/dashboard/count", IsUser, UserDashboardCount);
 
 
 module.exports = UserRouter;

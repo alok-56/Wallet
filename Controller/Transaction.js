@@ -401,7 +401,7 @@ const addFundbyAdmin = async (req, res, next) => {
       amount: amount,
       status: "Success",
       type: "credit",
-      balance: user.balance ? user.balance : 0 + amount,
+      Balance: user.balance ? user.balance : 0 + amount,
       month: new Date().getMonth() + 1,
       Year: new Date().getFullYear(),
     });

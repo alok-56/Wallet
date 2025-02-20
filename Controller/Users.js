@@ -9,6 +9,9 @@ const {
   getAllLevelsBusiness,
   getMembersAtLevel,
 } = require("../Helper/GenerateLevelMember");
+const VoucherModal = require("../Modal/Voucher");
+const TransactionModal = require("../Modal/Transaction");
+const { default: mongoose } = require("mongoose");
 
 // Sign Up
 const SignUp = async (req, res, next) => {
@@ -228,8 +231,8 @@ const GetProfile = async (req, res, next) => {
 // Update Profile
 const UpdateProfile = async (req, res, next) => {
   try {
-    let  id  = req.user;
-    console.log(id)
+    let id = req.user;
+    console.log(id);
     let { Name, Email, Password, PublicKey } = req.body;
 
     let user = await UserModal.findById(id);
@@ -266,7 +269,7 @@ const UpdateProfile = async (req, res, next) => {
 // Direct Member
 const GetDirectMember = async (req, res, next) => {
   try {
-    const  id  = req.user;
+    const id = req.user;
     const user = await UserModal.findById(id);
     if (!user) {
       return next(new AppErr("User not Found", 404));
@@ -290,7 +293,7 @@ const GetDirectMember = async (req, res, next) => {
 // Level Wise Member
 const GetLevelWisemember = async (req, res, next) => {
   try {
-    const  id  = req.user;
+    const id = req.user;
     const { level } = req.query;
     const user = await UserModal.findById(id);
     if (!user) {
@@ -299,7 +302,7 @@ const GetLevelWisemember = async (req, res, next) => {
     let totalBusiness = 0;
     let allLevelsData = [];
 
-    if (!level) {
+    if (level==="all") {
       const { totalBusiness: business, levels } = await getAllLevelsBusiness(
         user.referralCode
       );
@@ -330,6 +333,123 @@ const GetLevelWisemember = async (req, res, next) => {
   }
 };
 
+// DashboardData
+const UserDashboardCount = async (req, res, next) => {
+  try {
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+
+    const user = await UserModal.findById(req.user);
+    if (!user) {
+      return next(new AppErr("User not found", 404));
+    }
+    const transactionSummary = await TransactionModal.aggregate([
+      {
+        $match: { UserId: new mongoose.Types.ObjectId(req.user) },
+      },
+      {
+        $group: {
+          _id: null,
+          totalCredit: {
+            $sum: {
+              $cond: [{ $eq: ["$type", "credit"] }, "$amount", 0],
+            },
+          },
+          totalDebit: {
+            $sum: {
+              $cond: [{ $eq: ["$type", "debit"] }, "$amount", 0],
+            },
+          },
+        },
+      },
+    ]);
+
+    const voucherSummary = await VoucherModal.aggregate([
+      {
+        $match: { UserId: new mongoose.Types.ObjectId(req.user) },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPaid: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Paid"] }, "$amount", 0],
+            },
+          },
+          totalTransfer: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "Transfer"] }, "$amount", 0],
+            },
+          },
+          totalPaidThisMonth: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", "Paid"] },
+                    { $eq: ["$month", currentMonth] },
+                    { $eq: ["$Year", currentYear] },
+                  ],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          totalTransferThisMonth: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$status", "Transfer"] },
+                    { $eq: ["$month", currentMonth] },
+                    { $eq: ["$Year", currentYear] },
+                  ],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]);
+
+    const directMembersCount = await UserModal.countDocuments({
+      referredBy: user.referralCode,
+    });
+    const getAllTeamMembersCount = async (userId) => {
+      const directReferrals = await UserModal.find({
+        referredBy: userId,
+      }).select("_id");
+      if (directReferrals.length === 0) return 0;
+      let teamCount = directReferrals.length;
+      for (const referral of directReferrals) {
+        teamCount += await getAllTeamMembersCount(referral._id);
+      }
+      return teamCount;
+    };
+    const teamMembersCount = await getAllTeamMembersCount(user.referralCode);
+
+    return res.status(200).json({
+      code: 200,
+      status: true,
+      data: {
+        totalCredit: transactionSummary[0]?.totalCredit || 0,
+        totalDebit: transactionSummary[0]?.totalDebit || 0,
+        totalPaid: voucherSummary[0]?.totalPaid || 0,
+        totalPaidThisMonth: voucherSummary[0]?.totalPaidThisMonth || 0,
+        totalTransfer: voucherSummary[0]?.totalTransfer || 0,
+        totalTransferThisMonth: voucherSummary[0]?.totalTransferThisMonth || 0,
+        directMembersCount: directMembersCount,
+        teamMembersCount: teamMembersCount,
+      },
+    });
+  } catch (error) {
+    return next(new AppErr(error.message, 500));
+  }
+};
+
 module.exports = {
   SignUp,
   SignIn,
@@ -340,4 +460,5 @@ module.exports = {
   UpdateProfile,
   GetDirectMember,
   GetLevelWisemember,
+  UserDashboardCount,
 };
