@@ -632,6 +632,34 @@ const SponserTeam = async (req, res, next) => {
   }
 };
 
+const ChangePassword = async (req, res, next) => {
+  try {
+    let { oldpassword, newpassword } = req.body;
+    let admin = await AdminModal.findOne({
+      _id: req.user,
+      Password: oldpassword.toString(),
+    });
+    if (!admin) {
+      return next(new AppErr("Admin Not found", 400));
+    }
+    let response = await AdminModal.findByIdAndUpdate(
+      req.user,
+      {
+        Password: newpassword,
+      },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    return next(new AppErr(error.message));
+  }
+};
+
 module.exports = {
   SignUpAdmin,
   SignInAdmin,
@@ -649,4 +677,5 @@ module.exports = {
   CommisionBymonth,
   TotalBalanceReport,
   SponserTeam,
+  ChangePassword,
 };

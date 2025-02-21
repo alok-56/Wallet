@@ -17,6 +17,7 @@ const {
   MemberBymonth,
   TotalBalanceReport,
   SponserTeam,
+  ChangePassword,
 } = require("../Controller/Admin");
 const IsAdmin = require("../Middleware/IsAdmin");
 const AdminRouter = express.Router();
@@ -55,5 +56,6 @@ AdminRouter.get("/dashboard/commision/month", IsAdmin, CommisionBymonth);
 AdminRouter.get("/dashboard/member/month", IsAdmin, MemberBymonth);
 AdminRouter.get("/balance/report", IsAdmin, TotalBalanceReport);
 AdminRouter.get("/users/sponserteam", IsAdmin, SponserTeam);
+AdminRouter.patch("/admin/changepassword", IsAdmin, ChangePassword);
 
 module.exports = AdminRouter;
