@@ -584,6 +584,54 @@ const TotalBalanceReport = async (req, res, next) => {
   }
 };
 
+// Sponser Team
+
+const fetchDownline = async (referralCode, startDate, endDate) => {
+  try {
+    const user = await UserModel.findOne({ referralCode });
+    if (!user) return [];
+    let downline = await UserModel.find({
+      referredBy: referralCode,
+      createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
+    }).select("-password");
+    let result = [...downline];
+    for (const member of downline) {
+      const memberDownline = await fetchDownline(
+        member.referralCode,
+        startDate,
+        endDate
+      );
+      result = [...result, ...memberDownline];
+    }
+
+    return result;
+  } catch (error) {
+    return [];
+  }
+};
+
+const SponserTeam = async (req, res, next) => {
+  try {
+    const { referralCode, startDate, endDate } = req.query;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+
+    const downlineUsers = await fetchDownline(referralCode, start, end);
+    if (downlineUsers.length === 0) {
+      return res.status(404).json({ message: "No downline users found" });
+    }
+    return res.status(200).json({
+      status: true,
+      code: 200,
+      data: downlineUsers,
+    });
+  } catch (error) {
+    return next(new AppErr(error.message));
+  }
+};
+
 module.exports = {
   SignUpAdmin,
   SignInAdmin,
@@ -600,4 +648,5 @@ module.exports = {
   MemberBymonth,
   CommisionBymonth,
   TotalBalanceReport,
+  SponserTeam,
 };

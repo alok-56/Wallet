@@ -16,6 +16,7 @@ const {
   CommisionBymonth,
   MemberBymonth,
   TotalBalanceReport,
+  SponserTeam,
 } = require("../Controller/Admin");
 const IsAdmin = require("../Middleware/IsAdmin");
 const AdminRouter = express.Router();
@@ -53,5 +54,6 @@ AdminRouter.get("/dashboard/transaction/month", IsAdmin, TrnsactionBymonth);
 AdminRouter.get("/dashboard/commision/month", IsAdmin, CommisionBymonth);
 AdminRouter.get("/dashboard/member/month", IsAdmin, MemberBymonth);
 AdminRouter.get("/balance/report", IsAdmin, TotalBalanceReport);
+AdminRouter.get("/users/sponserteam", IsAdmin, SponserTeam);
 
 module.exports = AdminRouter;
