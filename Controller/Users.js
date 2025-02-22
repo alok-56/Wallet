@@ -255,7 +255,7 @@ const UpdateProfile = async (req, res, next) => {
     if (Email) {
       let emailcheck = await UserModal.findOne({
         Email: Email,
-        _id: { $ne: req.user._id },
+        _id: { $ne: req.user },
       });
       if (emailcheck) {
         return next(new AppErr("Email Already Exists", 400));
