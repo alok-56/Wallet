@@ -233,7 +233,20 @@ const UpdateProfile = async (req, res, next) => {
   try {
     let id = req.user;
     console.log(id);
-    let { Name, Email, Password, PublicKey } = req.body;
+    let { Name, Email, oldpassword, Password, PublicKey } = req.body;
+
+    if (oldpassword) {
+      let user = await UserModal.findOne({ Password: oldpassword });
+      if (!user) {
+        return next(new AppErr("User Not Found", 404));
+      }else if(!Password){
+        return next(new AppErr("New Password is required", 400));
+      }
+    } else if (Password) {
+      if (!oldpassword) {
+        return next(new AppErr("old Password is required", 400));
+      }
+    }
 
     let user = await UserModal.findById(id);
     if (!user) {
@@ -302,7 +315,7 @@ const GetLevelWisemember = async (req, res, next) => {
     let totalBusiness = 0;
     let allLevelsData = [];
 
-    if (level==="all") {
+    if (level === "all") {
       const { totalBusiness: business, levels } = await getAllLevelsBusiness(
         user.referralCode
       );

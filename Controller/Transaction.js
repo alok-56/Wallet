@@ -837,9 +837,9 @@ const ExceptedMonthlyPayment = async (req, res, next) => {
 
       groupedData[userId].totalCommision += item.commision;
       groupedData[userId].dailyCommision =
-        groupedData[userId].totalCommision / 30; 
+        groupedData[userId].totalCommision / 30;
       groupedData[userId].multipliedCommision =
-        groupedData[userId].dailyCommision * 30; 
+        groupedData[userId].dailyCommision * 30;
     });
 
     res.status(200).json({
