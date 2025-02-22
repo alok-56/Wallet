@@ -232,14 +232,13 @@ const GetProfile = async (req, res, next) => {
 const UpdateProfile = async (req, res, next) => {
   try {
     let id = req.user;
-    console.log(id);
     let { Name, Email, oldpassword, Password, PublicKey } = req.body;
 
     if (oldpassword) {
       let user = await UserModal.findOne({ Password: oldpassword });
       if (!user) {
         return next(new AppErr("User Not Found", 404));
-      }else if(!Password){
+      } else if (!Password) {
         return next(new AppErr("New Password is required", 400));
       }
     } else if (Password) {
@@ -254,7 +253,10 @@ const UpdateProfile = async (req, res, next) => {
     }
 
     if (Email) {
-      let emailcheck = await UserModal.findOne({ Email: Email });
+      let emailcheck = await UserModal.findOne({
+        Email: Email,
+        _id: { $ne: req.user._id },
+      });
       if (emailcheck) {
         return next(new AppErr("Email Already Exists", 400));
       }
