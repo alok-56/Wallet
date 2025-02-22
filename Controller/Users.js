@@ -372,7 +372,30 @@ const UserDashboardCount = async (req, res, next) => {
           },
           totalDebit: {
             $sum: {
-              $cond: [{ $eq: ["$type", "debit"] }, "$amount", 0],
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$type", "debit"] },
+                    { $eq: ["$status", "Success"] },
+                  ],
+                },
+                "$amount",
+                0,
+              ],
+            },
+          },
+          pendingwithdrwal: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ["$type", "debit"] },
+                    { $eq: ["$status", "Pending"] },
+                  ],
+                },
+                "$amount",
+                0,
+              ],
             },
           },
         },
@@ -458,6 +481,7 @@ const UserDashboardCount = async (req, res, next) => {
         totalTransferThisMonth: voucherSummary[0]?.totalTransferThisMonth || 0,
         directMembersCount: directMembersCount,
         teamMembersCount: teamMembersCount,
+        pendingwithdrwal: transactionSummary[0]?.pendingwithdrwal || 0,
       },
     });
   } catch (error) {
