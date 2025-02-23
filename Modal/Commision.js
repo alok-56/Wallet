@@ -12,6 +12,10 @@ const CommisionSchema = new Schema(
       required: true,
       ref: "user",
     },
+    depositby: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    },
     amount: {
       type: Number,
       required: true,

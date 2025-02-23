@@ -26,17 +26,18 @@ const distributeRewards = async (session, userId, amount) => {
   const transaction = new CommisionModal({
     UserId: currentUser._id,
     Sponser: currentUser._id,
+    depositby: userId,
     amount: amount,
     commision: (amount * currentUserCommission) / 100,
     status: "Success",
     month: new Date().getMonth() + 1,
     Year: new Date().getFullYear(),
   });
-  console.log(currentUser.balance, amount);
+
+  // current user
   await transaction.save({ session });
   currentUser.rewards += (amount * currentUserCommission) / 100;
   currentUser.balance = currentUser.balance + Number(amount);
-  console.log(currentUser.balance);
   await currentUser.save({ session });
 
   while (currentUser && currentUser.referredBy && level <= 10) {
@@ -77,6 +78,7 @@ const distributeRewards = async (session, userId, amount) => {
     const transaction = new CommisionModal({
       UserId: referrer._id,
       Sponser: currentUser._id,
+      depositby: userId,
       amount: amount,
       commision: reward,
       status: "Success",
@@ -338,7 +340,8 @@ const GetCommision = async (req, res, next) => {
 
     let funds = await CommisionModal.find(filter)
       .populate("UserId", "-Password")
-      .populate("Sponser");
+      .populate("Sponser")
+      .populate("depositby");
 
     return res.status(200).json({
       status: true,
@@ -619,10 +622,56 @@ const GenerateProfit = async (req, res, next) => {
   try {
     let { month, year } = req.body;
 
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
     const transactions = await CommisionModal.find().session(session);
     let voucher = await VoucherModal.find({ month, Year: year }).session(
       session
     );
+
+    let voucherLast = await VoucherModal.find()
+      .sort({ _id: -1 })
+      .limit(1)
+      .session(session);
+
+    if (voucherLast.length > 0) {
+      if (month === 1) {
+        if (month - voucherLast[0].month !== -10) {
+          return next(
+            new AppErr(
+              `First Generate Voucher of month ${
+                monthNames[voucherLast[0].month]
+              } and year ${voucherLast[0].Year}`,
+              400
+            )
+          );
+        }
+      } else {
+        if (month - voucherLast[0].month !== 1) {
+          return next(
+            new AppErr(
+              `First Generate Voucher of month ${
+                monthNames[voucherLast[0].month]
+              } and year ${voucherLast[0].Year}`,
+              400
+            )
+          );
+        }
+      }
+    }
 
     if (voucher.length > 0) {
       await VoucherModal.deleteMany({ month, Year: year }).session(session);
