@@ -66,7 +66,7 @@ const UpdateDirectCommision = async (req, res, next) => {
 // Get All Direct Commision
 const GetDirectCommision = async (req, res, next) => {
   try {
-    let direct = await DirectCommisionmodal.find();
+    let direct = await DirectCommisionmodal.find().populate("UserId");
     return res.status(200).json({
       status: true,
       code: 200,
@@ -83,7 +83,7 @@ const GetDirectCommision = async (req, res, next) => {
 const GetDirectCommisionById = async (req, res, next) => {
   try {
     let { id } = req.params;
-    let direct = await DirectCommisionmodal.findById(id);
+    let direct = await DirectCommisionmodal.findById(id).populate("UserId");
     return res.status(200).json({
       status: true,
       code: 200,
@@ -100,7 +100,7 @@ const GetDirectCommisionByUserId = async (req, res, next) => {
   try {
     let direct = await DirectCommisionmodal.find({
       UserId: req.user,
-    });
+    })
     return res.status(200).json({
       status: true,
       code: 200,
