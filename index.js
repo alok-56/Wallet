@@ -12,6 +12,8 @@ const TransactionRouter = require("./Routes/Transaction");
 const RankingRouter = require("./Routes/Ranking");
 const NewsRouter = require("./Routes/Appnews");
 const TicketRouter = require("./Routes/Ticket");
+const DirectCommisionRouter = require("./Routes/DirectCommision");
+
 
 require("dotenv").config();
 Db();
@@ -33,6 +35,7 @@ app.use("/api/v1/transaction", TransactionRouter);
 app.use("/api/v1/ranking", RankingRouter);
 app.use("/api/v1/Appnews", NewsRouter);
 app.use("/api/v1/ticket", TicketRouter);
+app.use("/api/v1/commision", DirectCommisionRouter);
 
 //Not Found Route Page
 app.use("*", (req, res, next) => {
