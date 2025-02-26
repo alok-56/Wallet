@@ -15,7 +15,7 @@ DirectCommisionRouter.patch("/direct/update/:id",
 
 DirectCommisionRouter.get("/direct/get", IsAdmin, GetDirectCommision);
 DirectCommisionRouter.get("/direct/get/:id", IsAdmin, GetDirectCommisionById);
-DirectCommisionRouter.get("/direct/get/userid/:id", IsUser, GetDirectCommisionByUserId);
+DirectCommisionRouter.get("/direct/get/userid", IsUser, GetDirectCommisionByUserId);
 DirectCommisionRouter.get("/direct/get/userid/count/new", IsUser, GetDirectCommisionByUserIdCount);
 
 

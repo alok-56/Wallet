@@ -12,6 +12,7 @@ const {
 const VoucherModal = require("../Modal/Voucher");
 const TransactionModal = require("../Modal/Transaction");
 const { default: mongoose } = require("mongoose");
+const DirectCommisionmodal = require("../Modal/DirectCommision");
 
 // Sign Up
 const SignUp = async (req, res, next) => {
@@ -456,6 +457,15 @@ const UserDashboardCount = async (req, res, next) => {
     const directMembersCount = await UserModal.countDocuments({
       referredBy: user.referralCode,
     });
+
+    let sum = 0;
+    let direct = await DirectCommisionmodal.find({
+      UserId: req.user,
+    });
+    for (var i = 0; i < direct.length; i++) {
+      sum += direct[i].amount;
+    }
+
     const getAllTeamMembersCount = async (userId) => {
       const directReferrals = await UserModal.find({
         referredBy: userId,
@@ -482,6 +492,7 @@ const UserDashboardCount = async (req, res, next) => {
         directMembersCount: directMembersCount,
         teamMembersCount: teamMembersCount,
         pendingwithdrwal: transactionSummary[0]?.pendingwithdrwal || 0,
+        directmonth: sum || 0,
       },
     });
   } catch (error) {

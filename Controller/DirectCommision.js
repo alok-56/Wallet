@@ -56,7 +56,7 @@ const UpdateDirectCommision = async (req, res, next) => {
       status: true,
       code: 200,
       message: "Direct commision Updated Successfully",
-      data:direct
+      data: direct,
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
@@ -100,7 +100,7 @@ const GetDirectCommisionByUserId = async (req, res, next) => {
   try {
     let direct = await DirectCommisionmodal.find({
       UserId: req.user,
-    })
+    });
     return res.status(200).json({
       status: true,
       code: 200,
@@ -126,7 +126,7 @@ const GetDirectCommisionByUserIdCount = async (req, res, next) => {
       status: true,
       code: 200,
       message: "Direct commision Fetched Successfully",
-      data: sum
+      data: sum,
     });
   } catch (error) {
     return next(new AppErr(error.message, 500));
